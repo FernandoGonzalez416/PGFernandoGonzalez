@@ -1,0 +1,9 @@
+{
+  "name": "node-tasks",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Tareas livianas/serverless del proyecto (actualizaciones puntuales, notificaciones, procesos auxiliares). Sin servicios por ahora.",
+  "scripts": {},
+  "dependencies": {}
+}

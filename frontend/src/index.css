@@ -1,0 +1,46 @@
+:root {
+  --morado: #6a1b9a;
+  --morado-claro: #f3e5f5;
+  --blanco: #ffffff;
+  --dorado: #d4a017;
+  --ambar: #ffb300;
+  --rojo: #d32f2f;
+  --texto: #212121;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, Arial, sans-serif;
+  color: var(--texto);
+  background: var(--blanco);
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero {
+  text-align: center;
+  color: var(--blanco);
+  background:
+    linear-gradient(135deg, var(--morado), #8e24aa);
+  padding: 3rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.hero h1 {
+  margin: 0 0 0.5rem;
+}
+
+.hero p {
+  margin: 0;
+  opacity: 0.9;
+}
