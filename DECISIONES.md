@@ -4,7 +4,7 @@ Este archivo contiene **únicamente** decisiones reales: confirmadas por el usua
 
 Estado de las entradas: `APROBADO` (confirmado explícitamente), `PENDIENTE DE APROBACIÓN` (propuesto, en revisión, NO se implementa), `NO APLICA / POSPUESTO` (fuera de alcance actual).
 
-Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **P3/P3a/P13, P14, P15 y P16**; P17 queda **PENDIENTE DE CONFIGURACIÓN**).
+Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **P3/P3a/P13, P14, P15 y P16**). Mismo día, **P17 fue CONFIGURADO**: servidor Supabase MCP añadido a `opencode.json` (`read_only=true`, `features=database,docs,development`) y **autenticado** vía OAuth. Pendiente: aportar el **Project Ref** para limitar el alcance a un solo proyecto y reiniciar OpenCode para que la sesión cargue las herramientas MCP.
 
 ### Tabla de estado general
 
@@ -18,7 +18,7 @@ Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **
 | P6 | Modelo de datos | APROBADO (13 entidades; esquema P15 APROBADO) |
 | P7 | Diseño web | APROBADO |
 | P8 | Comprobante de venta | APROBADO (detalle del recibo se define al implementar) |
-| P9 | Supabase | APROBADO; conexión MCP PENDIENTE DE CONFIGURACIÓN (P17) |
+| P9 | Supabase | APROBADO; conexión MCP CONFIGURADA y AUTENTICADA (P17); falta scoping por Project Ref |
 | P10 | Git | APROBADO (commit/push pendientes de orden explícita) |
 | P11 | Versiones | APROBADO (proceso + propuesta P16) |
 | P12 | Hosting / despliegue | NO APLICA / POSPUESTO |
@@ -26,7 +26,7 @@ Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **
 | P14 | Matriz de permisos | APROBADO (2026-09-21, con modificación) |
 | P15 | Esquema de datos detallado | APROBADO (2026-09-21, esquema inicial) |
 | P16 | Versiones detalladas | APROBADO (2026-09-21; no instalar aún) |
-| P17 | Supabase MCP | PENDIENTE DE CONFIGURACIÓN (solo lectura; sin conexión ni modificaciones) |
+| P17 | Supabase MCP | CONFIGURADO y AUTENTICADO (2026-09-21): solo lectura en `opencode.json`; pendiente Project Ref para scoping |
 
 > Regla: **no se cambia una decisión a APROBADO por haberla propuesto**. Solo el usuario lo aprueba.
 
@@ -209,7 +209,7 @@ Criterio revisado y detallado en la sección **"P13. Criterio de suficiencia de 
 
 ## Propuestas revisadas y aprobadas
 
-> P3a, P13, P14, P15 y P16 fueron **APROBADAS el 2026-09-21**; P17 queda **PENDIENTE DE CONFIGURACIÓN**. Aunque aprobadas, **ninguna de estas propuestas se implementa** (código, dependencias, tablas) hasta que el usuario autorice el inicio del desarrollo.
+> P3a, P13, P14, P15 y P16 fueron **APROBADAS el 2026-09-21**; **P17 fue CONFIGURADO y AUTENTICADO** el mismo día (MCP de Supabase en `opencode.json`, solo lectura). Aunque aprobadas/configuradas, **ninguna de estas propuestas se implementa** (código, dependencias, tablas) hasta que el usuario autorice el inicio del desarrollo.
 
 ## P3a. Estrategia de predicción: plan completo (APROBADO — 2026-09-21)
 
@@ -586,13 +586,13 @@ Notas:
 
 ---
 
-## P17. Conexión de Supabase vía MCP (PENDIENTE DE CONFIGURACIÓN — solo lectura; sin conexión aún)
+## P17. Conexión de Supabase vía MCP (CONFIGURADO Y AUTENTICADO — 2026-09-21; solo lectura)
 
-> **Estado 2026-09-21**: se aprueba el **enfoque solo lectura**, pero **no se configura ni conecta MCP ni se modifica Supabase** hasta que se indique. Cuando corresponda, se pedirá al usuario el **Project Ref** (`xxxx` de `supabase.com/dashboard/project/xxxxxxxx`) y se le indicará el comando exacto (`opencode mcp auth supabase`). No hay nada más por decidir; los pasos están listos abajo.
+> **Estado 2026-09-21**: se aprobó el **enfoque solo lectura** y **quedó configurado y autenticado**: el servidor remoto `supabase` está en `opencode.json` (`read_only=true`, `features=database,docs,development`) y la sesión OAuth fue completada por el usuario en el navegador (`opencode mcp auth supabase`). Sigue pendiente: aportar el **Project Ref** (`xxxx` de `supabase.com/dashboard/project/xxxxxxxx`) para limitar el servidor a un solo proyecto (deshabilitando las herramientas de cuenta) y **reiniciar OpenCode** para que la sesión cargue las herramientas MCP.
 
 ### Qué configuración se necesita
 
-En `opencode.json` del proyecto (sin credenciales; solo la URL y opciones):
+Estado actual en `opencode.json` del proyecto (sin credenciales; solo la URL y opciones):
 
 ```json
 {
@@ -601,25 +601,27 @@ En `opencode.json` del proyecto (sin credenciales; solo la URL y opciones):
   "mcp": {
     "supabase": {
       "type": "remote",
-      "url": "https://mcp.supabase.com/mcp?project_ref=<REF>&read_only=true&features=database,docs,development",
-      "enabled": true
+      "enabled": true,
+      "url": "https://mcp.supabase.com/mcp?read_only=true&features=database,docs,development"
     }
   }
 }
 ```
 
-- `project_ref=<REF>`: limita el servidor a **un solo proyecto** (desactiva herramientas de gestión de cuentas).
-- `read_only=true`: al inicio se trabaja en **modo solo lectura** (inspección del esquema actual); al autorizar migraciones se cambia a escritura.
+Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<REF>` para limitar el servidor a **un solo proyecto** (desactiva herramientas de gestión de cuentas) → `https://mcp.supabase.com/mcp?project_ref=<REF>&read_only=true&features=database,docs,development`.
+
+- `read_only=true`: se trabaja en **modo solo lectura** (inspección del esquema actual). Al autorizar migraciones se cambia de forma explícita e informada.
 - `features=database,docs,development`: expone solo consultas/tablas/migraciones/lógica de desarrollo y búsqueda de docs; sin Storage ni Branching.
-- El **token de autenticación NO se guarda en el repositorio**: opencode lo almacena en su propio store de credenciales tras el flujo OAuth.
+- El **token de autenticación NO se guarda en el repositorio**: opencode lo almacena en su propio store de credenciales (OAuth dinámico; no se requirió PAT).
 
-### Qué debe hacer el usuario manualmente
+### Estado manual (ejecutado el 2026-09-21)
 
-1. Proporcionar el **Project Ref** del proyecto Supabase existente (segmento `xxxx` de la URL del dashboard: `supabase.com/dashboard/project/xxxxxxxx`). Es lo único que falta para completar la URL.
-2. Etapa 1 (inspección): ejecutar en terminal `opencode mcp auth supabase`. Se abre el navegador; iniciar sesión en Supabase y **conceder acceso a la organización** que contiene el proyecto.
-3. Reiniciar OpenCode (los cambios de `opencode.json` no se recargan en caliente).
-4. Verificar: pedir "listar las tablas actuales del schema" para confirmar la conexión.
-5. Para carga de credenciales usamos **variables de entorno** (nunca archivos del repo). No se requieren PAT en este flujo (OAuth dinámico); si en el futuro se necesita CI, se usará `SUPABASE_ACCESS_TOKEN` en variable de entorno, nunca commitearla.
+1. ✅ Añadido el servidor `supabase` a `opencode.json` del proyecto (solo lectura).
+2. ✅ Autenticado: `opencode mcp auth supabase` — el usuario completó el flujo OAuth en el navegador. Verificado con `opencode mcp auth list` → `supabase ✓ authenticated`.
+3. ⏳ Pendiente: **reiniciar OpenCode** para que la sesión cargue las herramientas MCP (los cambios de `opencode.json` no se recargan en caliente).
+4. ⏳ Pendiente: aportar el **Project Ref** para añadir `project_ref=<REF>` y deshabilitar las herramientas de cuenta.
+5. ⏳ Pendiente: verificar la conexión pidiendo "listar las tablas actuales del schema".
+6. Para carga de credenciales de la aplicación usamos **variables de entorno** (nunca archivos del repo). No se requieren PAT en este flujo (OAuth dinámico); si en el futuro se necesita CI, se usará `SUPABASE_ACCESS_TOKEN` en variable de entorno, nunca commitearla.
 
 ---
 
@@ -630,7 +632,7 @@ En `opencode.json` del proyecto (sin credenciales; solo la URL y opciones):
 Siguen pendientes:
 - **R4. Estrategia offline definitiva** y su tecnología (P2): se documentará cuando llegue el momento; no bloquea la primera versión.
 - **R5. Detalles de despliegue/hosting** (P12): cuando la aplicación esté avanzada.
-- **R7/R12. Supabase MCP (P17)**: PENDIENTE DE CONFIGURACIÓN — falta aportar el **Project Ref** y ejecutar `opencode mcp auth supabase`. No conectar ni modificar Supabase hasta que se indique.
+- **R7/R12. Supabase MCP (P17)**: CONFIGURADO y AUTENTICADO (2026-09-21). Pendientes menores: aportar el **Project Ref** para scoping (`project_ref=<REF>`) y **reiniciar OpenCode** para cargar las herramientas en la sesión. No crear ni modificar objetos en Supabase sin informar antes.
 - **Inicio del desarrollo**: crear código (React/FastAPI/Node/Supabase/IA), instalar dependencias o crear tablas queda **prohibido hasta orden explícita** del usuario.
 
 ---
