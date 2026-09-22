@@ -132,6 +132,7 @@ Reglas detalladas por dominio: `.opencode/rules/` (se cargan automáticamente v�
 | `general.md` | Reglas generales del proyecto |
 | `arquitectura.md` | Arquitectura |
 | `frontend-web.md` | Frontend web (React.js) |
+| `diseno.md` | Diseño visual del frontend (paleta, tipografía, motion) |
 | `backend.md` | Backend (FastAPI + Node.js) |
 | `base-de-datos.md` | Base de datos (Supabase) |
 | `offline-sincronizacion.md` | Offline / sincronización |

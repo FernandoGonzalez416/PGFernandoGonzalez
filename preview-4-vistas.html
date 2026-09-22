@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prototipo de prueba — 4 vistas · Plataforma de inventarios</title>
+<meta name="description" content="Prototipo visual sin funcionalidad. Datos ficticios de prueba. No es el diseño final." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+<style>
+  /* ============================= TOKENS ============================= */
+  :root {
+    --bg: #F6F4FA;
+    --surface: #FFFFFF;
+    --surface-soft: #FBF9FE;
+    --ink: #211A33;
+    --ink-soft: #6B6480;
+    --ink-faint: #9B94B0;
+    --primary: #6A47C7;
+    --primary-deep: #5734B0;
+    --primary-soft: #EDE6FB;
+    --gold: #C8A35C;
+    --gold-deep: #A97F3D;
+    --gold-soft: #F7EFDD;
+    --amber: #B0781F;
+    --amber-soft: #FBF1D9;
+    --red: #C04A4A;
+    --red-soft: #FBE7E3;
+    --ok: #3E8C6B;
+    --ok-soft: #E4F2EA;
+    --line: rgba(107, 100, 128, 0.14);
+    --line-strong: rgba(107, 100, 128, 0.24);
+    --shadow-card: 0 1px 2px rgba(38, 26, 66, 0.05), 0 18px 44px -22px rgba(87, 52, 176, 0.22);
+    --shadow-hover: 0 2px 4px rgba(38, 26, 66, 0.06), 0 30px 60px -24px rgba(87, 52, 176, 0.3);
+    --r-lg: 22px;
+    --r-md: 16px;
+    --r-sm: 12px;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-exp: cubic-bezier(0.32, 0.72, 0, 1);
+    --sidebar: 248px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  a { text-decoration: none; color: inherit; }
+  button { font-family: inherit; }
+
+  /* ============================= BARRA DE PROTOTIPO ============================= */
+  .proto-bar {
+    position: sticky; top: 0; z-index: 90;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 18px;
+    background: var(--ink);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .proto-bar .proto-label {
+    font-size: 11px; font-weight: 700; color: #F3EEFF;
+    background: rgba(255,255,255,0.1);
+    padding: 5px 10px; border-radius: 999px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-right: 6px; white-space: nowrap;
+  }
+  .proto-tab {
+    font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.72);
+    background: transparent; border: 0; cursor: pointer;
+    padding: 7px 14px; border-radius: 999px;
+    transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out), transform 200ms var(--ease-out);
+  }
+  .proto-tab:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .proto-tab:active { transform: scale(0.96); }
+  .proto-tab.active { background: #F3EEFF; color: var(--ink); }
+  .proto-hint { margin-left: auto; font-size: 10.5px; color: rgba(255,255,255,0.45); font-weight: 500; white-space: nowrap; }
+
+  .app {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: var(--sidebar) 1fr;
+    grid-template-areas: "sidebar main";
+    grid-template-rows: auto;
+    min-height: calc(100dvh - 57px);
+  }
+
+  /* ============================= SIDEBAR ============================= */
+  .sidebar {
+    grid-area: sidebar;
+    position: sticky; top: 57px;
+    height: calc(100dvh - 57px);
+    padding: 26px 16px;
+    display: flex; flex-direction: column; gap: 22px;
+    background: linear-gradient(180deg, #FCFBFE 0%, #F3EEF9 100%);
+    border-right: 1px solid var(--line);
+  }
+
+  .brand { display: flex; align-items: center; gap: 12px; padding: 0 10px; }
+  .brand-mark {
+    width: 42px; height: 42px; border-radius: 14px; flex-shrink: 0;
+    display: grid; place-items: center;
+    background: linear-gradient(145deg, var(--primary) 0%, var(--primary-deep) 100%);
+    box-shadow: 0 10px 22px -10px rgba(87, 52, 176, 0.55), inset 0 1px 0 rgba(255,255,255,0.22);
+  }
+  .brand-mark svg { width: 22px; height: 22px; }
+  .brand-name { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; }
+  .brand-tag { font-size: 11.5px; color: var(--ink-soft); font-weight: 500; }
+
+  .nav-group { display: flex; flex-direction: column; gap: 6px; }
+  .nav-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-faint); padding: 0 12px; margin-bottom: 4px; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: var(--r-sm);
+    color: var(--ink-soft); font-size: 13.5px; font-weight: 600;
+    transition: color 220ms var(--ease-out), background-color 220ms var(--ease-out), transform 220ms var(--ease-out);
+  }
+  .nav-item svg { width: 18px; height: 18px; stroke-width: 1.6; color: var(--ink-faint); transition: color 220ms var(--ease-out); }
+  .nav-item:hover { color: var(--primary); transform: translateX(2px); }
+  .nav-item:hover svg { color: var(--primary); }
+  .nav-item.active { color: var(--primary-deep); background: var(--primary-soft); box-shadow: inset 0 0 0 1px rgba(106,71,199,0.22); }
+  .nav-item.active svg { color: var(--primary); }
+  .nav-badge { margin-left: auto; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: var(--amber); background: var(--amber-soft); }
+  .nav-badge.warn { color: var(--red); background: var(--red-soft); }
+
+  .side-card {
+    margin-top: auto;
+    border-radius: var(--r-md);
+    padding: 16px;
+    background: linear-gradient(150deg, #F2ECFC 0%, #EFE8FA 100%);
+    box-shadow: inset 0 0 0 1px rgba(106, 71, 199, 0.16);
+    position: relative; overflow: hidden;
+  }
+  .side-card::before {
+    content: ""; position: absolute; top: -42px; right: -42px;
+    width: 108px; height: 108px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(200, 163, 92, 0.28), transparent 68%);
+    pointer-events: none;
+  }
+  .side-card-title { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; }
+  .side-card-text { font-size: 12px; color: var(--ink-soft); margin: 4px 0 12px; line-height: 1.45; }
+
+  .user { display: flex; align-items: center; gap: 11px; padding: 12px 10px 0; border-top: 1px solid var(--line); margin-top: 4px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 13px; font-weight: 800; color: #fff;
+    background: linear-gradient(145deg, var(--gold), var(--gold-deep));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .user-name { font-size: 13px; font-weight: 700; line-height: 1.2; }
+  .user-role { font-size: 11px; color: var(--ink-soft); }
+
+  /* ============================= MAIN ============================= */
+  .main { grid-area: main; min-width: 0; padding: 30px 38px 56px; max-width: 1280px; width: 100%; }
+
+  .topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
+  .menu-toggle {
+    display: none; width: 40px; height: 40px; border-radius: 12px; border: 0;
+    background: var(--surface); cursor: pointer; place-items: center;
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .menu-toggle svg { width: 20px; height: 20px; stroke-width: 1.6; color: var(--ink-soft); }
+  .menu-toggle:active { transform: scale(0.94); }
+  .topbar h1 { font-size: clamp(20px, 2.4vw, 24px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; margin-right: auto; }
+
+  .search { position: relative; }
+  .search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--ink-faint); }
+  .search input {
+    font-family: inherit; font-size: 13px; color: var(--ink);
+    padding: 10px 14px 10px 40px; border-radius: 999px; border: 0;
+    background: var(--surface); width: 220px; outline: none;
+    box-shadow: inset 0 0 0 1px var(--line), 0 10px 26px -18px rgba(38,26,66,0.35);
+    transition: box-shadow 240ms var(--ease-out), width 300ms var(--ease-exp);
+  }
+  .search input::placeholder { color: var(--ink-faint); font-weight: 500; }
+  .search input:focus { box-shadow: inset 0 0 0 1.5px var(--primary), 0 14px 30px -18px rgba(87,52,176,0.5); width: 264px; }
+
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: 0;
+    background: var(--surface); display: grid; place-items: center; cursor: pointer; position: relative;
+    box-shadow: inset 0 0 0 1px var(--line), 0 10px 26px -18px rgba(38,26,66,0.35);
+    transition: transform 220ms var(--ease-out), box-shadow 240ms var(--ease-out);
+  }
+  .icon-btn svg { width: 18px; height: 18px; stroke-width: 1.6; color: var(--ink-soft); }
+  .icon-btn:hover { transform: translateY(-1px); }
+  .icon-btn:active { transform: scale(0.94); }
+  .icon-btn .dot { position: absolute; top: 8px; right: 9px; width: 7px; height: 7px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 3px var(--surface); }
+
+  .scrim {
+    position: fixed; inset: 0; z-index: 75;
+    background: rgba(33, 26, 51, 0.35);
+    opacity: 0; pointer-events: none;
+    transition: opacity 300ms var(--ease-out);
+  }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+
+  .section-title-wrap { display: flex; align-items: baseline; gap: 10px; margin: 0 0 14px; }
+  .section-title-wrap h3 { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; }
+  .section-title-wrap .hint { font-size: 12px; color: var(--ink-faint); font-weight: 500; }
+
+  /* ============================= COMPONENTES BASE ============================= */
+  .shell {
+    border-radius: calc(var(--r-lg) + 6px);
+    padding: 6px;
+    background: linear-gradient(180deg, rgba(107,100,128,0.1), rgba(107,100,128,0.05));
+    box-shadow: inset 0 0 0 1px rgba(107,100,128,0.1);
+    transition: transform 300ms var(--ease-exp), box-shadow 300ms var(--ease-exp);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .shell:hover { transform: translateY(-3px); box-shadow: inset 0 0 0 1px rgba(106,71,199,0.14), 0 26px 52px -26px rgba(87,52,176,0.34); }
+  }
+  .shell-inner {
+    background: var(--surface);
+    border-radius: var(--r-lg);
+    padding: clamp(16px, 2.6vw, 22px);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.9);
+    height: 100%;
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    padding: 11px 18px; border-radius: 999px; border: 0; cursor: pointer; white-space: nowrap;
+    transition: transform 220ms var(--ease-out), box-shadow 240ms var(--ease-out), background-color 240ms var(--ease-out), filter 240ms var(--ease-out);
+  }
+  .btn svg { width: 16px; height: 16px; stroke-width: 1.8; transition: transform 240ms var(--ease-out); }
+  .btn:hover svg { transform: translateX(2px); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { color: #fff; background: var(--primary); box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 14px 26px -12px rgba(87,52,176,0.55); }
+  .btn-primary:hover { background: var(--primary-deep); transform: translateY(-1px); }
+  .btn-gold { color: #3A2C10; background: var(--gold); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 14px 26px -12px rgba(169,127,61,0.5); }
+  .btn-gold:hover { filter: brightness(1.05); transform: translateY(-1px); }
+  .btn-ghost { color: var(--primary-deep); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .btn-ghost:hover { background: var(--surface-soft); transform: translateY(-1px); }
+  .btn-sm { padding: 8px 14px; font-size: 12.5px; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill.good { color: var(--ok); background: var(--ok-soft); }
+  .pill.amber { color: var(--amber); background: var(--amber-soft); }
+  .pill.red { color: var(--red); background: var(--red-soft); }
+  .pill.neutral { color: var(--ink-soft); background: var(--surface-soft); box-shadow: inset 0 0 0 1px var(--line); }
+  .pill.gold { color: var(--gold-deep); background: var(--gold-soft); }
+
+  .bare { background: transparent; box-shadow: none; }
+  .bare .shell-inner { background: transparent; box-shadow: none; padding: 0; }
+
+  .swatch {
+    width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+    display: grid; place-items: center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 8px 18px -10px rgba(38,26,66,0.5);
+  }
+  .swatch svg { width: 19px; height: 19px; stroke-width: 1.5; }
+  .sw-violet { background: linear-gradient(145deg, #C9B5F2, #8F6EDF); color: #3D2A7A; }
+  .sw-gold { background: linear-gradient(145deg, #EAD3A7, #D2AC63); color: #8A6424; }
+  .sw-sage { background: linear-gradient(145deg, #D4E7DB, #9CC3AE); color: #2C6B4E; }
+  .sw-coral { background: linear-gradient(145deg, #F5CFC7, #E5A79B); color: #9C4638; }
+
+  .prod { display: flex; align-items: center; gap: 12px; }
+  .prod-name { font-weight: 700; font-size: 13.5px; line-height: 1.3; }
+  .prod-cat { font-size: 11.5px; color: var(--ink-faint); }
+
+  .link-row { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--primary); transition: gap 220ms var(--ease-out); }
+  .link-row svg { width: 14px; height: 14px; stroke-width: 1.8; }
+  .link-row:hover { gap: 9px; }
+
+  .mini-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .mini-row:first-of-type { padding-top: 0; }
+  .mini-row:last-child { border-bottom: 0; padding-bottom: 0; }
+  .mini-date {
+    width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0;
+    display: grid; place-items: center; font-weight: 800; font-size: 15px; line-height: 1;
+    background: var(--red-soft); color: var(--red); box-shadow: inset 0 0 0 1px rgba(192,74,74,0.18);
+  }
+  .mini-date.ok { background: var(--ok-soft); color: var(--ok); box-shadow: inset 0 0 0 1px rgba(62,140,107,0.18); }
+  .mini-date.amber { background: var(--amber-soft); color: var(--amber); box-shadow: inset 0 0 0 1px rgba(176,120,31,0.18); }
+  .mini-date span { display: block; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; }
+  .mini-body { flex: 1; min-width: 0; }
+  .mini-title { font-weight: 700; font-size: 13px; line-height: 1.3; }
+  .mini-sub { font-size: 11.5px; color: var(--ink-faint); font-weight: 500; }
+
+  .chip {
+    font-size: 12px; font-weight: 600; color: var(--ink-soft);
+    padding: 8px 14px; border-radius: 999px; background: var(--surface); border: 0; cursor: pointer;
+    box-shadow: inset 0 0 0 1px var(--line);
+    transition: color 220ms var(--ease-out), background-color 220ms var(--ease-out), box-shadow 240ms var(--ease-out), transform 200ms var(--ease-out);
+  }
+  .chip:hover { color: var(--primary-deep); }
+  .chip:active { transform: scale(0.96); }
+  .chip.active { color: var(--primary-deep); background: var(--primary-soft); box-shadow: inset 0 0 0 1px rgba(106,71,199,0.3); }
+
+  /* ============================= VISTAS ============================= */
+  .view { display: none; }
+  .view.active { display: block; animation: viewIn 260ms var(--ease-out); }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---------- VISTA PANEL (dirección editorial / bento) ---------- */
+  .panel-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 18px;
+  }
+  .hero-band { grid-column: 1 / -1; }
+  .bento-hero {
+    border-radius: var(--r-lg);
+    padding: clamp(24px, 3.4vw, 32px);
+    display: grid; grid-template-columns: 1.35fr 1fr; gap: 24px; align-items: center;
+    background:
+      radial-gradient(30rem 18rem at 90% -40%, rgba(255,255,255,0.16), transparent 60%),
+      linear-gradient(120deg, var(--primary-deep) 0%, #7B5BD8 58%, #8F72DE 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 24px 48px -24px rgba(87,52,176,0.5);
+    position: relative; overflow: hidden;
+  }
+  .bento-hero::after {
+    content: ""; position: absolute; right: -70px; top: -110px;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.09), transparent 65%);
+  }
+  .bento-hero .hero-body { position: relative; z-index: 1; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em;
+    padding: 5px 12px; border-radius: 999px;
+    background: rgba(255,255,255,0.12); color: #F3EEFF;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); margin-bottom: 12px;
+  }
+  .bento-hero h2 { font-size: clamp(20px, 2.8vw, 27px); font-weight: 800; letter-spacing: -0.02em; color: #fff; line-height: 1.15; margin-bottom: 8px; }
+  .bento-hero p { font-size: clamp(12.5px, 1.4vw, 13.5px); color: rgba(255,255,255,0.82); max-width: 46ch; }
+  .hero-stats { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .hero-stat {
+    background: rgba(255,255,255,0.1);
+    border-radius: var(--r-md);
+    padding: 14px 12px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16);
+  }
+  .hero-stat b { display: block; font-size: clamp(18px, 2.2vw, 22px); font-weight: 800; color: #fff; letter-spacing: -0.02em; line-height: 1.1; }
+  .hero-stat span { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.75); }
+
+  .big-number-area { grid-column: span 8; }
+  .big-number {
+    font-size: clamp(56px, 9vw, 96px);
+    font-weight: 800; letter-spacing: -0.03em; line-height: 0.95;
+    color: var(--ink);
+  }
+  .big-number em { font-style: normal; color: var(--primary); }
+  .number-caption { margin-top: 10px; color: var(--ink-soft); font-size: 14px; font-weight: 500; max-width: 40ch; }
+  .number-foot { margin-top: 22px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+
+  .alert-side { grid-column: span 4; display: flex; flex-direction: column; gap: 14px; }
+  .alert-tile {
+    display: flex; align-items: center; gap: 13px;
+    padding: 14px; border-radius: var(--r-md);
+  }
+  .alert-tile.amber { background: var(--amber-soft); box-shadow: inset 0 0 0 1px rgba(176,120,31,0.2); }
+  .alert-tile.red { background: var(--red-soft); box-shadow: inset 0 0 0 1px rgba(192,74,74,0.2); }
+  .alert-tile .tile-icon { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; background: rgba(255,255,255,0.6); }
+  .alert-tile.amber .tile-icon svg { color: var(--amber); }
+  .alert-tile.red .tile-icon svg { color: var(--red); }
+  .alert-tile b { display: block; font-size: 13.5px; font-weight: 800; line-height: 1.25; }
+  .alert-tile span { font-size: 11.5px; color: var(--ink-soft); font-weight: 500; }
+  .alert-tile .tile-cta { margin-left: auto; font-size: 18px; color: var(--ink-faint); font-weight: 700; }
+
+  .chart-area { grid-column: span 8; }
+  .chart svg { width: 100%; height: auto; display: block; }
+  .chart-line { fill: none; stroke: var(--primary); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .chart-fill { fill: url(#gradFillPanel); }
+  .chart-grid-h { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 5; }
+  .chart-dot { fill: var(--surface); stroke: var(--primary-deep); stroke-width: 2.5; transition: transform 220ms var(--ease-out); }
+  .point:hover .chart-dot { transform: scale(1.35); }
+  .legend { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+  .legend span { font-size: 11.5px; color: var(--ink-faint); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  .mini-trend { grid-column: span 4; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
+  .trend-row { display: flex; align-items: center; gap: 12px; }
+  .trend-rank { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; font-size: 12px; background: var(--primary-soft); color: var(--primary-deep); flex-shrink: 0; }
+  .trend-row b { font-size: 13px; font-weight: 700; }
+  .trend-row span { font-size: 11.5px; color: var(--ink-faint); }
+  .trend-growth { margin-left: auto; font-weight: 800; font-size: 12px; color: var(--ok); }
+
+  .suggest-band { grid-column: 1 / -1; }
+  .band {
+    border-radius: var(--r-lg);
+    padding: clamp(18px, 2.6vw, 24px);
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    background: linear-gradient(120deg, #FBF7EE 0%, #F6EFDF 100%);
+    box-shadow: inset 0 0 0 1px rgba(200,163,92,0.26);
+  }
+  .band-icon {
+    width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+    display: grid; place-items: center;
+    background: var(--gold-soft); box-shadow: inset 0 0 0 1px rgba(200,163,92,0.3);
+  }
+  .band-icon svg { width: 21px; height: 21px; stroke-width: 1.6; color: var(--gold-deep); }
+  .band-title { font-size: 14px; font-weight: 800; line-height: 1.25; }
+  .band-text { font-size: 12.5px; color: var(--ink-soft); font-weight: 500; max-width: 54ch; }
+  .band .btn { margin-left: auto; }
+
+  /* ---------- VISTA PRODUCTOS ---------- */
+  .prod-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .prod-toolbar .search input, .prod-toolbar .search input:focus { width: 260px; }
+  .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .prod-toolbar .btn { margin-left: auto; }
+
+  .prod-table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left; font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--ink-faint);
+    padding: 0 0 12px; border-bottom: 1px solid var(--line);
+  }
+  tbody td { padding: 14px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: 0; }
+  @media (hover: hover) and (pointer: fine) {
+    tbody tr { transition: background-color 180ms var(--ease-out); }
+    tbody tr:hover { background: var(--surface-soft); }
+    tbody tr:hover td { border-bottom-color: transparent; }
+  }
+
+  .stock-meter { width: 92px; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 8px; }
+  .stock-meter i { display: block; height: 100%; border-radius: 999px; background: var(--ok); }
+  .stock-meter i.on { background: var(--amber); }
+  .stock-meter i.no { background: var(--red); }
+
+  .price { font-weight: 700; }
+  .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .row-btn {
+    width: 30px; height: 30px; border-radius: 9px; border: 0; cursor: pointer;
+    display: grid; place-items: center; background: var(--surface-soft);
+    box-shadow: inset 0 0 0 1px var(--line);
+    color: var(--ink-faint);
+    transition: color 200ms var(--ease-out), background-color 200ms var(--ease-out), transform 200ms var(--ease-out);
+  }
+  .row-btn svg { width: 14px; height: 14px; stroke-width: 1.8; }
+  .row-btn:hover { color: var(--primary); background: var(--primary-soft); }
+  .row-btn:active { transform: scale(0.92); }
+  .row-btn.warn:hover { color: var(--red); background: var(--red-soft); }
+
+  .table-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; font-size: 12px; color: var(--ink-faint); font-weight: 500; }
+
+  .pager { display: flex; gap: 6px; }
+  .pager button {
+    width: 30px; height: 30px; border-radius: 9px; border: 0; cursor: pointer;
+    font-size: 12px; font-weight: 700; color: var(--ink-soft); background: var(--surface);
+    box-shadow: inset 0 0 0 1px var(--line);
+    transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out), transform 200ms var(--ease-out);
+  }
+  .pager button:active { transform: scale(0.92); }
+  .pager button.current { background: var(--primary); color: #fff; box-shadow: inset 0 0 0 1px var(--primary); }
+
+  /* ---------- VISTA VENTAS ---------- */
+  .sales-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 18px; align-items: start; }
+  .catalog-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .cat-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px; border-radius: var(--r-md);
+    background: var(--surface-soft); box-shadow: inset 0 0 0 1px var(--line);
+    transition: transform 220ms var(--ease-out), box-shadow 240ms var(--ease-out), background-color 220ms var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .cat-row:hover { background: var(--surface); box-shadow: inset 0 0 0 1px rgba(106,71,199,0.22), 0 14px 30px -20px rgba(87,52,176,0.4); transform: translateY(-1px); }
+  }
+  .cat-row .prod { flex: 1; min-width: 0; }
+  .cat-price { font-weight: 800; font-size: 13.5px; }
+  .cat-stock { font-size: 11px; color: var(--ink-faint); font-weight: 600; display: block; text-align: right; }
+  .add-btn {
+    width: 32px; height: 32px; border-radius: 10px; border: 0; cursor: pointer;
+    display: grid; place-items: center; background: var(--primary); color: #fff;
+    box-shadow: 0 8px 18px -8px rgba(87,52,176,0.6);
+    transition: transform 200ms var(--ease-out), background-color 200ms var(--ease-out);
+  }
+  .add-btn svg { width: 15px; height: 15px; stroke-width: 2; }
+  .add-btn:hover { background: var(--primary-deep); }
+  .add-btn:active { transform: scale(0.9); }
+
+  .cart { position: sticky; top: 75px; }
+  .cart-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .cart-head .folio { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--ink-faint); letter-spacing: 0.05em; }
+  .cart-items { display: flex; flex-direction: column; margin-top: 10px; }
+  .cart-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .cart-item:first-of-type { padding-top: 0; }
+  .cart-item b { font-size: 13px; font-weight: 700; line-height: 1.3; }
+  .cart-item .mini-sub { display: block; }
+  .cart-item .qty { display: flex; align-items: center; gap: 8px; }
+  .qty button {
+    width: 24px; height: 24px; border-radius: 8px; border: 0; cursor: pointer;
+    display: grid; place-items: center; font-size: 14px; font-weight: 800;
+    background: var(--surface-soft); color: var(--primary-deep); box-shadow: inset 0 0 0 1px var(--line);
+    transition: background-color 180ms var(--ease-out), transform 180ms var(--ease-out);
+  }
+  .qty button:active { transform: scale(0.88); }
+  .qty span { font-size: 13px; font-weight: 700; width: 22px; text-align: center; }
+  .cart-item .line-total { margin-left: auto; font-weight: 800; font-size: 13.5px; }
+  .cart-empty { text-align: center; padding: 26px 10px; color: var(--ink-faint); font-size: 12.5px; font-weight: 500; }
+  .cart-empty svg { width: 30px; height: 30px; stroke-width: 1.4; color: var(--line-strong); margin-bottom: 8px; }
+  .cart-totals { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .t-line { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-soft); font-weight: 600; }
+  .t-line.total { font-size: 18px; font-weight: 800; color: var(--ink); letter-spacing: -0.01em; padding-top: 10px; border-top: 1px solid var(--line); }
+  .t-line.total b { color: var(--primary-deep); }
+  .pay-btn { width: 100%; margin-top: 14px; }
+  .pay-note { text-align: center; font-size: 11px; color: var(--ink-faint); font-weight: 500; margin-top: 10px; }
+
+  /* ---------- VISTA ALERTAS ---------- */
+  .alerts-layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; align-items: start; }
+  .alert-group-title { display: flex; align-items: center; gap: 10px; margin: 22px 0 12px; }
+  .alert-group-title:first-child { margin-top: 0; }
+  .alert-group-title .cnt {
+    font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 999px;
+    background: var(--surface); box-shadow: inset 0 0 0 1px var(--line);
+    color: var(--ink-soft);
+  }
+  .alert-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px; border-radius: var(--r-md);
+    background: var(--surface); box-shadow: inset 0 0 0 1px var(--line);
+    margin-bottom: 10px;
+    transition: transform 220ms var(--ease-out), box-shadow 240ms var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .alert-card:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px rgba(106,71,199,0.16), 0 18px 40px -24px rgba(87,52,176,0.35); }
+  }
+  .alert-card.red { box-shadow: inset 0 0 0 1px rgba(192,74,74,0.22); }
+  .alert-card.amber { box-shadow: inset 0 0 0 1px rgba(176,120,31,0.22); }
+  .alert-icon {
+    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+    display: grid; place-items: center;
+  }
+  .alert-icon svg { width: 18px; height: 18px; stroke-width: 1.7; }
+  .alert-icon.red { background: var(--red-soft); color: var(--red); }
+  .alert-icon.amber { background: var(--amber-soft); color: var(--amber); }
+  .alert-icon.gold { background: var(--gold-soft); color: var(--gold-deep); }
+  .alert-card b { font-size: 13px; font-weight: 700; line-height: 1.3; display: block; }
+  .alert-card .mini-sub { display: block; }
+  .alert-card .pill { margin-left: auto; flex-shrink: 0; }
+  .alert-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .alert-meta span { font-size: 11px; color: var(--ink-faint); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+  .alert-meta svg { width: 12px; height: 12px; stroke-width: 1.8; }
+
+  .alert-side-cards { display: flex; flex-direction: column; gap: 14px; }
+  .mini-summary { display: flex; flex-direction: column; gap: 12px; }
+  .mini-kpi { display: flex; align-items: center; gap: 12px; }
+  .mini-kpi .tile-icon { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0; }
+  .mini-kpi .tile-icon.red { background: var(--red-soft); color: var(--red); }
+  .mini-kpi .tile-icon.amber { background: var(--amber-soft); color: var(--amber); }
+  .mini-kpi .tile-icon.gold { background: var(--gold-soft); color: var(--gold-deep); }
+  .mini-kpi .tile-icon svg { width: 17px; height: 17px; stroke-width: 1.7; }
+  .mini-kpi b { display: block; font-size: 15px; font-weight: 800; }
+  .mini-kpi span { font-size: 11.5px; color: var(--ink-faint); font-weight: 500; }
+
+  .shadow-note { text-align: center; font-size: 11.5px; color: var(--ink-faint); font-weight: 500; margin-top: 34px; letter-spacing: 0.02em; }
+  .shadow-note b { color: var(--amber); }
+
+  /* ============================= MOTION (CSS puro, sin dependencia de JS) ============================= */
+  .reveal { animation: revealIn 700ms var(--ease-out) both; animation-delay: var(--reveal-delay); }
+  :root { --reveal-delay: 0ms; }
+  @keyframes revealIn {
+    from { opacity: 0; transform: translateY(22px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============================= RESPONSIVE ============================= */
+  @media (max-width: 1080px) {
+    .app { grid-template-columns: 220px 1fr; grid-template-areas: "sidebar main"; }
+    .main { padding: 24px; }
+    .topbar h1 { font-size: 20px; }
+    .panel-grid { grid-template-columns: repeat(6, 1fr); }
+    .big-number-area, .chart-area, .mini-trend { grid-column: span 6; }
+    .alert-side { grid-column: span 3; }
+    .sales-grid { grid-template-columns: 1fr; }
+    .cart { position: static; }
+    .alerts-layout { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; grid-template-areas: "main"; }
+    .main { grid-area: main; }
+    .proto-hint { display: none; }
+    .proto-bar { padding: 10px 12px; }
+    .proto-tab { padding: 7px 11px; font-size: 11.5px; }
+
+    .sidebar {
+      position: fixed; inset: 57px auto 0 0; width: min(300px, 84vw); z-index: 80;
+      transform: translateX(-105%);
+      transition: transform 400ms var(--ease-exp);
+      box-shadow: 0 40px 80px -30px rgba(33,26,51,0.4);
+    }
+    .sidebar.open { transform: translateX(0); }
+
+    .menu-toggle { display: grid; }
+    .main { padding: 18px 16px 44px; }
+    .topbar { flex-wrap: wrap; margin-bottom: 20px; }
+    .topbar h1 { width: calc(100% - 110px); }
+    .search { order: 3; width: 100%; }
+    .search input, .search input:focus { width: 100%; }
+
+    .bento-hero { grid-template-columns: 1fr; }
+    .hero-stats { grid-template-columns: repeat(3, 1fr); }
+    .alert-side { grid-column: span 6; }
+    .mini-trend { grid-column: span 6; }
+    .band .btn { margin-left: 0; width: 100%; }
+    .big-number { font-size: clamp(48px, 16vw, 64px); }
+
+    .prod-toolbar .search { width: 100%; order: 0; }
+    .prod-toolbar .search input, .prod-toolbar .search input:focus { width: 100%; }
+    .filter-chips { order: 1; width: 100%; }
+    .prod-toolbar .btn { margin-left: 0; order: 2; width: 100%; }
+
+    .prod-table-wrap { overflow: visible; }
+    .responsive-table thead { display: none; }
+    .responsive-table tbody { display: grid; gap: 10px; }
+    .responsive-table tr {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px 14px;
+      align-items: center;
+      padding: 14px;
+      border-radius: var(--r-md);
+      background: var(--surface-soft);
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    .responsive-table td { border: 0; padding: 0; }
+    .responsive-table .cell-prod { grid-column: 1 / -1; grid-row: 1; }
+    .responsive-table .cell-stock { grid-column: 1; }
+    .responsive-table .cell-price { grid-column: 2; text-align: right; align-self: center; }
+    .responsive-table .cell-state { grid-column: auto; }
+    .responsive-table .cell-actions { grid-column: 3; row-gap: 14px; align-self: center; }
+    .table-foot { flex-direction: column; gap: 10px; align-items: flex-start; }
+
+    .catalog-list { gap: 8px; }
+    .cat-row { padding: 11px; }
+    .alerts-layout { grid-template-columns: 1fr; }
+  }
+
+  @media (min-width: 769px) {
+    @supports (container-type: inline-size) {
+      .side-card { container: side / inline-size; }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .view.active { animation: none; }
+    .sidebar { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="proto-bar" role="navigation" aria-label="Selector de vista preliminar">
+  <span class="proto-label">Prueba de diseño</span>
+  <button class="proto-tab active" data-view="panel">Panel</button>
+  <button class="proto-tab" data-view="productos">Productos</button>
+  <button class="proto-tab" data-view="ventas">Ventas</button>
+  <button class="proto-tab" data-view="alertas">Alertas</button>
+  <span class="proto-hint">Solo estética · datos ficticios · no es el diseño final</span>
+</div>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3c1.8 2 2.6 4.1 2.6 6.2 0 2-.5 3.6-1.1 4.9h-3c-.6-1.3-1.1-2.9-1.1-4.9C9.4 7.1 10.2 5 12 3z" />
+          <path d="M9.6 15h4.8l-.8 4.6a2 2 0 0 1-3.2 0L9.6 15z" />
+          <path d="M10.2 11.4h3.6" />
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Belleza Clara</div>
+        <div class="brand-tag">Gestión de inventario</div>
+      </div>
+    </div>
+
+    <nav aria-label="Principal">
+      <div class="nav-group">
+        <div class="nav-label">General</div>
+        <a href="#" class="nav-item" data-nav="panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
+          Panel general
+        </a>
+        <a href="#" class="nav-item" data-nav="productos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 7.4 16.6 3.4A2 2 0 0 0 15.2 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.8a2 2 0 0 0-.4-1.4z"/><path d="M16 3v4a2 2 0 0 0 2 2h4M9 13h6M9 17h4"/></svg>
+          Productos
+        </a>
+        <a href="#" class="nav-item" data-nav="ventas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12V9a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v3a2 2 0 0 1-2 2h-2v4h-3"/><path d="M2 12h20"/><path d="M2 12a3 3 0 0 0 3 3h5v5H4a2 2 0 0 1-2-2v-6z"/></svg>
+          Ventas
+        </a>
+        <a href="#" class="nav-item" data-nav="alertas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          Alertas
+          <span class="nav-badge warn">3</span>
+        </a>
+      </div>
+
+      <div class="nav-group" style="margin-top:20px;">
+        <div class="nav-label">Control</div>
+        <a href="#" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5.5-3.2 9.5-8 11-4.8-1.5-8-5.5-8-11V5.5l8-3.5 8 3.5V10z"/><path d="M9.5 12.5l2 2 3.5-4"/></svg>
+          Existencias
+        </a>
+        <a href="#" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.5-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+          Proveedores
+        </a>
+        <a href="#" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 11-12h-8l1-8z"/></svg>
+          Reabastecer
+        </a>
+      </div>
+    </nav>
+
+    <div class="side-card">
+      <div class="side-card-title">Predicción de demanda</div>
+      <div class="side-card-text">La IA analiza tus ventas y sugiere cuánto comprar cada semana.</div>
+      <a href="#" class="btn btn-sm" style="color:var(--primary-deep);font-size:12.5px;padding:0;">
+        Ver para esta semana
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+    </div>
+
+    <div class="user">
+      <div class="avatar">FG</div>
+      <div>
+        <div class="user-name">Fernando G.</div>
+        <div class="user-role">Administrador</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+
+    <!-- ==================== VISTA: PANEL ==================== -->
+    <section class="view active" id="view-panel">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <h1>Panel general</h1>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" placeholder="Buscar producto o código…" aria-label="Buscar" />
+        </div>
+        <button class="icon-btn" aria-label="Notificaciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span class="dot" aria-hidden="true"></span>
+        </button>
+      </header>
+
+      <div class="panel-grid">
+
+        <section class="hero-band reveal">
+          <div class="bento-hero">
+            <div class="hero-body">
+              <span class="eyebrow">Lunes · 21 sep 2026</span>
+              <h2>Buen día, Fernando. Tu negocio va bien hoy.</h2>
+              <p>Tienes 3 avisos por revisar y una sugerencia de compra lista para la próxima semana.</p>
+            </div>
+            <div class="hero-stats">
+              <div class="hero-stat"><b>Q 1,284.50</b><span>Ventas de hoy</span></div>
+              <div class="hero-stat"><b>18</b><span>Transacciones</span></div>
+              <div class="hero-stat"><b>+9%</b><span>Proyección semanal</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="big-number-area shell bare reveal">
+          <div class="shell-inner">
+            <div class="section-title-wrap"><h3>Estado general</h3><span class="hint">Resumen del día</span></div>
+            <div class="big-number">248 <em>productos</em></div>
+            <p class="number-caption">Catalogados y disponibles para vender. 12 están bajo el mínimo y 5 por vencer en 14 días.</p>
+            <div class="number-foot">
+              <a href="#" class="btn btn-primary btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                Nueva venta
+              </a>
+              <a href="#" class="btn btn-ghost btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 7.4 16.6 3.4A2 2 0 0 0 15.2 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.8a2 2 0 0 0-.4-1.4z"/><path d="M16 3v4a2 2 0 0 0 2 2h4M9 13h6M9 17h4"/></svg>
+                Ver inventario
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <aside class="alert-side">
+          <div class="alert-tile amber reveal" style="--reveal-delay:60ms">
+            <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+            <div><b>12 productos</b><span>Stock bajo del mínimo</span></div>
+            <span class="tile-cta">›</span>
+          </div>
+          <div class="alert-tile red reveal" style="--reveal-delay:120ms">
+            <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div><b>5 por vencer</b><span>En los próximos 14 días</span></div>
+            <span class="tile-cta">›</span>
+          </div>
+        </aside>
+
+        <section class="chart-area shell bare reveal" style="grid-column:1 / -1;">
+          <div class="shell-inner">
+            <div class="section-title-wrap"><h3>Ventas de los últimos 7 días</h3><span class="hint">Q por día</span></div>
+            <div class="chart">
+              <svg viewBox="0 0 320 150" role="img" aria-label="Gráfico de tendencia de ventas">
+                <defs>
+                  <linearGradient id="gradFillPanel" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#6A47C7" stop-opacity="0.28" />
+                    <stop offset="100%" stop-color="#6A47C7" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                <line class="chart-grid-h" x1="12" y1="40" x2="308" y2="40" />
+                <line class="chart-grid-h" x1="12" y1="85" x2="308" y2="85" />
+                <line class="chart-grid-h" x1="12" y1="130" x2="308" y2="130" />
+                <path class="chart-fill" d="M12,120 L56,100 L100,88 L144,104 L188,66 L232,54 L276,30 L276,140 L12,140 Z" />
+                <path class="chart-line" d="M12,120 L56,100 L100,88 L144,104 L188,66 L232,54 L276,30" />
+                <g class="point"><circle class="chart-dot" cx="276" cy="30" r="4.5" /></g>
+              </svg>
+            </div>
+            <div class="legend">
+              <span><i style="background:var(--primary);"></i>Lunes</span>
+              <span><i style="background:var(--amber);"></i>Mínimo diario esperado</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="mini-trend shell reveal" style="--reveal-delay:40ms">
+          <div class="shell-inner">
+            <div class="section-title-wrap"><h3>Más vendidos</h3><span class="hint">Esta semana</span></div>
+            <div class="trend-row">
+              <span class="trend-rank">1</span>
+              <div><b>Labial mate “Orquídea”</b><span>Maquillaje · 26 uds.</span></div>
+              <span class="trend-growth">+18%</span>
+            </div>
+            <div class="trend-row">
+              <span class="trend-rank">2</span>
+              <div><b>Perfume “Ámbar” 50 ml</b><span>Fragancias · 14 uds.</span></div>
+              <span class="trend-growth">+11%</span>
+            </div>
+            <div class="trend-row">
+              <span class="trend-rank">3</span>
+              <div><b>Crema hidratante facial</b><span>Cuidado de piel · 9 uds.</span></div>
+              <span class="trend-growth">+6%</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="suggest-band reveal">
+          <div class="band">
+            <div class="band-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-5 4 3 5-7"/><path d="M20 5v3h-3"/></svg>
+            </div>
+            <div>
+              <div class="band-title">Predicción de esta semana</div>
+              <div class="band-text">Los productos más vendidos crecerán ~9% en 7 días. Revisa la sugerencia antes de ordenar al proveedor.</div>
+            </div>
+            <a href="#" class="btn btn-gold">
+              Ver sugerencia
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+          </div>
+        </section>
+
+      </div>
+    </section>
+
+    <!-- ==================== VISTA: PRODUCTOS ==================== -->
+    <section class="view" id="view-productos">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle2" aria-label="Abrir menú">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <h1>Productos</h1>
+        <div class="search" style="margin-left:auto;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" placeholder="Buscar producto o código…" aria-label="Buscar" />
+        </div>
+      </header>
+
+      <div class="prod-toolbar reveal">
+        <div class="filter-chips">
+          <button class="chip active">Todos</button>
+          <button class="chip">Maquillaje</button>
+          <button class="chip">Fragancias</button>
+          <button class="chip">Cuidado de piel</button>
+        </div>
+        <a href="#" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Nuevo producto
+        </a>
+      </div>
+
+      <div class="shell reveal" style="--reveal-delay:60ms">
+        <div class="shell-inner">
+          <div class="prod-table-wrap">
+            <table class="responsive-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Existencia</th>
+                  <th>Precio</th>
+                  <th>Estado</th>
+                  <th style="text-align:right;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="cell-prod">
+                    <div class="prod">
+                      <div class="swatch sw-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1.8 2 2.6 4.1 2.6 6.2 0 2-.5 3.6-1.1 4.9h-3c-.6-1.3-1.1-2.9-1.1-4.9C9.4 7.1 10.2 5 12 3z"/><path d="M9.6 15h4.8l-.8 4.6a2 2 0 0 1-3.2 0L9.6 15z"/></svg></div>
+                      <div>
+                        <div class="prod-name">Labial mate “Orquídea”</div>
+                        <div class="prod-cat">Maquillaje · Cód. LB-014</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="cell-stock"><span class="stock-meter"><i class="no" style="width:15%;"></i></span><b class="stock-num" style="color:var(--red);">3</b> uds.</td>
+                  <td class="cell-price"><span class="price">Q 42.00</span></td>
+                  <td class="cell-state"><span class="pill red">Por vencer</span></td>
+                  <td class="cell-actions">
+                    <div class="row-actions">
+                      <button class="row-btn" aria-label="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
+                      <button class="row-btn warn" aria-label="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg></button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="cell-prod">
+                    <div class="prod">
+                      <div class="swatch sw-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 0-4 4c0 1.5.8 2.8 2 3.5C6.5 12 5 16 7 21h10c2-5 .5-9-3-10.5 1.2-.7 2-2 2-3.5a4 4 0 0 0-4-4z" transform="translate(6 3) scale(.5)"/></svg></div>
+                      <div>
+                        <div class="prod-name">Perfume “Ámbar” 50 ml</div>
+                        <div class="prod-cat">Fragancias · Cód. PF-027</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="cell-stock"><span class="stock-meter"><i class="on" style="width:35%;"></i></span><b class="stock-num" style="color:var(--amber);">7</b> uds.</td>
+                  <td class="cell-price"><span class="price">Q 125.00</span></td>
+                  <td class="cell-state"><span class="pill amber">Bajo mínimo</span></td>
+                  <td class="cell-actions">
+                    <div class="row-actions">
+                      <button class="row-btn" aria-label="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
+                      <button class="row-btn warn" aria-label="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg></button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="cell-prod">
+                    <div class="prod">
+                      <div class="swatch sw-sage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1.8 2 2.6 4.1 2.6 6.2 0 2-.5 3.6-1.1 4.9h-3c-.6-1.3-1.1-2.9-1.1-4.9C9.4 7.1 10.2 5 12 3z"/><path d="M9.6 15h4.8l-.8 4.6a2 2 0 0 1-3.2 0L9.6 15z"/></svg></div>
+                      <div>
+                        <div class="prod-name">Serum vitamina C</div>
+                        <div class="prod-cat">Cuidado de piel · Cód. CR-039</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="cell-stock"><span class="stock-meter"><i style="width:70%;"></i></span><b class="stock-num">14</b> uds.</td>
+                  <td class="cell-price"><span class="price">Q 88.00</span></td>
+                  <td class="cell-state"><span class="pill good">Disponible</span></td>
+                  <td class="cell-actions">
+                    <div class="row-actions">
+                      <button class="row-btn" aria-label="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
+                      <button class="row-btn warn" aria-label="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg></button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="cell-prod">
+                    <div class="prod">
+                      <div class="swatch sw-coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1.8 2 2.6 4.1 2.6 6.2 0 2-.5 3.6-1.1 4.9h-3c-.6-1.3-1.1-2.9-1.1-4.9C9.4 7.1 10.2 5 12 3z"/><path d="M9.6 15h4.8l-.8 4.6a2 2 0 0 1-3.2 0L9.6 15z"/></svg></div>
+                      <div>
+                        <div class="prod-name">Bálsamo labial “Miel”</div>
+                        <div class="prod-cat">Maquillaje · Cód. BL-003</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="cell-stock"><span class="stock-meter"><i class="on" style="width:55%;"></i></span><b class="stock-num" style="color:var(--amber);">11</b> uds.</td>
+                  <td class="cell-price"><span class="price">Q 25.50</span></td>
+                  <td class="cell-state"><span class="pill amber">Por vencer</span></td>
+                  <td class="cell-actions">
+                    <div class="row-actions">
+                      <button class="row-btn" aria-label="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
+                      <button class="row-btn warn" aria-label="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="table-foot">
+            <span>Mostrando 4 de 248 productos · Datos ficticios</span>
+            <div class="pager">
+              <button aria-label="Página anterior">‹</button>
+              <button class="current">1</button>
+              <button>2</button>
+              <button>3</button>
+              <button aria-label="Siguiente">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VISTA: VENTAS ==================== -->
+    <section class="view" id="view-ventas">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle3" aria-label="Abrir menú">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <h1>Ventas</h1>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" placeholder="Buscar producto o código…" aria-label="Buscar" />
+        </div>
+      </header>
+
+      <div class="section-title-wrap reveal">
+        <h3>Agregar productos a la venta</h3>
+        <span class="hint">Toca + para agregar al carrito</span>
+      </div>
+
+      <div class="sales-grid">
+        <div class="shell reveal">
+          <div class="shell-inner" style="padding:clamp(14px, 2vw, 18px);">
+            <div class="catalog-list">
+              <div class="cat-row">
+                <div class="prod">
+                  <div class="swatch sw-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1.8 2 2.6 4.1 2.6 6.2 0 2-.5 3.6-1.1 4.9h-3c-.6-1.3-1.1-2.9-1.1-4.9C9.4 7.1 10.2 5 12 3z"/><path d="M9.6 15h4.8l-.8 4.6a2 2 0 0 1-3.2 0L9.6 15z"/></svg></div>
+                  <div>
+                    <div class="prod-name">Labial mate “Orquídea”</div>
+                    <div class="prod-cat">Maquillaje</div>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="cat-price">Q 42.00</div>
+                  <span class="cat-stock">Quedan 3 · por vencer</span>
+                </div>
+                <button class="add-btn" aria-label="Agregar al carrito"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+              </div>
+
+              <div class="cat-row">
+                <div class="prod">
+                  <div class="swatch sw-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 0-4 4c0 1.5.8 2.8 2 3.5C6.5 12 5 16 7 21h10c2-5 .5-9-3-10.5 1.2-.7 2-2 2-3.5a4 4 0 0 0-4-4z" transform="translate(6 3) scale(.5)"/></svg></div>
+                  <div>
+                    <div class="prod-name">Perfume “Ámbar” 50 ml</div>
+                    <div class="prod-cat">Fragancias</div>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="cat-price">Q 125.00</div>
+                  <span class="cat-stock">Quedan 7 · bajo mínimo</span>
+                </div>
+                <button class="add-btn" aria-label="Agregar al carrito"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+              </div>
+
+              <div class="cat-row">
+                <div class="prod">
+                  <div class="swatch sw-sage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1.8 2 2.6 4.1 2.6 6.2 0 2-.5 3.6-1.1 4.9h-3c-.6-1.3-1.1-2.9-1.1-4.9C9.4 7.1 10.2 5 12 3z"/><path d="M9.6 15h4.8l-.8 4.6a2 2 0 0 1-3.2 0L9.6 15z"/></svg></div>
+                  <div>
+                    <div class="prod-name">Serum vitamina C</div>
+                    <div class="prod-cat">Cuidado de piel</div>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="cat-price">Q 88.00</div>
+                  <span class="cat-stock">Quedan 14</span>
+                </div>
+                <button class="add-btn" aria-label="Agregar al carrito"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+              </div>
+
+              <div class="cat-row">
+                <div class="prod">
+                  <div class="swatch sw-coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1.8 2 2.6 4.1 2.6 6.2 0 2-.5 3.6-1.1 4.9h-3c-.6-1.3-1.1-2.9-1.1-4.9C9.4 7.1 10.2 5 12 3z"/><path d="M9.6 15h4.8l-.8 4.6a2 2 0 0 1-3.2 0L9.6 15z"/></svg></div>
+                  <div>
+                    <div class="prod-name">Crema hidratante facial</div>
+                    <div class="prod-cat">Cuidado de piel</div>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="cat-price">Q 64.00</div>
+                  <span class="cat-stock">Quedan 6 · bajo mínimo</span>
+                </div>
+                <button class="add-btn" aria-label="Agregar al carrito"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="shell cart reveal" style="--reveal-delay:80ms">
+          <div class="shell-inner">
+            <div class="cart-head">
+              <h3 style="font-size:15px;font-weight:800;">Venta en curso</h3>
+              <span class="folio">FOLIO F-000134</span>
+            </div>
+            <span class="pill neutral" style="margin-top:8px;">Recibo interno · No es factura</span>
+
+            <div class="cart-items">
+              <div class="cart-item">
+                <div class="swatch sw-violet" style="width:34px;height:34px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1.8 2 2.6 4.1 2.6 6.2 0 2-.5 3.6-1.1 4.9h-3c-.6-1.3-1.1-2.9-1.1-4.9C9.4 7.1 10.2 5 12 3z"/><path d="M9.6 15h4.8l-.8 4.6a2 2 0 0 1-3.2 0L9.6 15z"/></svg></div>
+                <div style="min-width:0;">
+                  <b>Labial mate “Orquídea”</b>
+                  <span class="mini-sub">Q 42.00 c/u</span>
+                </div>
+                <div class="qty">
+                  <button aria-label="Quitar uno">−</button>
+                  <span>2</span>
+                  <button aria-label="Agregar uno">+</button>
+                </div>
+                <span class="line-total">Q 84.00</span>
+              </div>
+
+              <div class="cart-item">
+                <div class="swatch sw-gold" style="width:34px;height:34px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 0-4 4c0 1.5.8 2.8 2 3.5C6.5 12 5 16 7 21h10c2-5 .5-9-3-10.5 1.2-.7 2-2 2-3.5a4 4 0 0 0-4-4z" transform="translate(6 3) scale(.5)"/></svg></div>
+                <div style="min-width:0;">
+                  <b>Perfume “Ámbar” 50 ml</b>
+                  <span class="mini-sub">Q 125.00 c/u</span>
+                </div>
+                <div class="qty">
+                  <button aria-label="Quitar uno">−</button>
+                  <span>1</span>
+                  <button aria-label="Agregar uno">+</button>
+                </div>
+                <span class="line-total">Q 125.00</span>
+              </div>
+            </div>
+
+            <div class="cart-totals">
+              <div class="t-line"><span>Subtotal</span><span>Q 209.00</span></div>
+              <div class="t-line"><span>Descuento</span><span>Q 0.00</span></div>
+              <div class="t-line total"><span>Total</span><b>Q 209.00</b></div>
+            </div>
+
+            <button class="btn btn-gold pay-btn">
+              Registrar venta y cobrar
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <p class="pay-note">Valida disponibilidad y descuenta inventario automáticamente.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VISTA: ALERTAS ==================== -->
+    <section class="view" id="view-alertas">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle4" aria-label="Abrir menú">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <h1>Alertas</h1>
+        <div class="filter-chips" style="margin-left:auto;">
+          <button class="chip active">Todas</button>
+          <button class="chip">Stock bajo</button>
+          <button class="chip">Vencimientos</button>
+          <button class="chip">Sugerencias</button>
+        </div>
+      </header>
+
+      <div class="alerts-layout">
+        <div class="alerts-list">
+          <div class="alert-group-title reveal">
+            <h3 style="font-size:15px;font-weight:800;">Requieren acción</h3>
+            <span class="cnt">3</span>
+          </div>
+
+          <div class="alert-card red reveal">
+            <div class="alert-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div style="flex:1;min-width:0;">
+              <b>Labial mate “Orquídea” vence en 12 días</b>
+              <span class="mini-sub">Quedan 3 unidades · lote activo</span>
+              <div class="alert-meta">
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>3 oct · 12 días</span>
+              </div>
+            </div>
+            <span class="pill red">Urgente</span>
+          </div>
+
+          <div class="alert-card amber reveal" style="--reveal-delay:40ms">
+            <div class="alert-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+            <div style="flex:1;min-width:0;">
+              <b>Perfume “Ámbar” 50 ml bajo el mínimo</b>
+              <span class="mini-sub">Quedan 7 de 20 · umbral configurado</span>
+              <div class="alert-meta">
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Con el umbral del producto</span>
+              </div>
+            </div>
+            <span class="pill amber">Bajo mínimo</span>
+          </div>
+
+          <div class="alert-card amber reveal" style="--reveal-delay:80ms">
+            <div class="alert-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-5 4 3 5-7"/><path d="M20 5v3h-3"/></svg></div>
+            <div style="flex:1;min-width:0;">
+              <b>Sugerencia de reabastecimiento lista</b>
+              <span class="mini-sub">5 productos · total estimado Q 640.00</span>
+              <div class="alert-meta">
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.5-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>Basada en la predicción de demanda</span>
+              </div>
+            </div>
+            <span class="pill gold">IA · confianza alta</span>
+          </div>
+
+          <div class="alert-group-title reveal">
+            <h3 style="font-size:15px;font-weight:800;">Próximos vencimientos</h3>
+            <span class="cnt">2</span>
+          </div>
+
+          <div class="alert-card reveal">
+            <div class="alert-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div style="flex:1;min-width:0;">
+              <b>Serum vitamina C · 16 oct</b>
+              <span class="mini-sub">Quedan 14 unidades</span>
+            </div>
+            <span class="pill amber">Pronto</span>
+          </div>
+
+          <div class="alert-card reveal" style="--reveal-delay:40ms">
+            <div class="alert-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div style="flex:1;min-width:0;">
+              <b>Bálsamo labial “Miel” · 10 oct</b>
+              <span class="mini-sub">Quedan 14 unidades · es temporada</span>
+            </div>
+            <span class="pill amber">Pronto</span>
+          </div>
+        </div>
+
+        <aside class="alert-side-cards">
+          <div class="shell reveal" style="--reveal-delay:60ms">
+            <div class="shell-inner">
+              <div class="section-title-wrap"><h3>Resumen</h3><span class="hint">Hoy</span></div>
+              <div class="mini-summary">
+                <div class="mini-kpi">
+                  <span class="tile-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+                  <div><b>12</b><span>Stock bajo del mínimo</span></div>
+                </div>
+                <div class="mini-kpi">
+                  <span class="tile-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                  <div><b>5</b><span>Por vencer (14 días)</span></div>
+                </div>
+                <div class="mini-kpi">
+                  <span class="tile-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-5 4 3 5-7"/><path d="M20 5v3h-3"/></svg></span>
+                  <div><b>1</b><span>Sugerencia de compra</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="shell reveal" style="--reveal-delay:120ms">
+            <div class="shell-inner">
+              <div class="section-title-wrap"><h3>¿Cómo funcionan las alertas?</h3></div>
+              <p style="font-size:12.5px;color:var(--ink-soft);font-weight:500;line-height:1.55;">Se generan al comparar el inventario con el umbral mínimo de cada producto y la fecha de vencimiento. Ámbar = bajo, rojo = urgente.</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <p class="shadow-note"><b>Prototipo de prueba</b> · Sin funcionalidad · Datos ficticios · Esto no es el diseño final</p>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" aria-hidden="true"></div>
+
+<script>
+(function () {
+  /* -------- Cambio de vista -------- */
+  var views = ["panel", "productos", "ventas", "alertas"];
+  var viewEls = {};
+  views.forEach(function (name) { viewEls[name] = document.getElementById("view-" + name); });
+
+  function setView(name) {
+    views.forEach(function (v) {
+      viewEls[v].classList.toggle("active", v === name);
+    });
+    document.querySelectorAll(".proto-tab").forEach(function (t) {
+      t.classList.toggle("active", t.getAttribute("data-view") === name);
+    });
+    document.querySelectorAll("[data-nav]").forEach(function (n) {
+      n.classList.toggle("active", n.getAttribute("data-nav") === name);
+    });
+    window.scrollTo(0, 0);
+  }
+
+  document.querySelectorAll(".proto-tab").forEach(function (t) {
+    t.addEventListener("click", function () { setView(t.getAttribute("data-view")); });
+  });
+  document.querySelectorAll("[data-nav]").forEach(function (n) {
+    n.addEventListener("click", function (e) { e.preventDefault(); setView(n.getAttribute("data-nav")); });
+  });
+
+  /* -------- Menú móvil -------- */
+  var sidebar = document.getElementById("sidebar");
+  var scrim = document.getElementById("scrim");
+  var toggles = document.querySelectorAll(".menu-toggle");
+
+  function closeMenu() { sidebar.classList.remove("open"); scrim.classList.remove("show"); }
+  function openMenu() { sidebar.classList.add("open"); scrim.classList.add("show"); }
+
+  toggles.forEach(function (t) {
+    t.addEventListener("click", function () {
+      sidebar.classList.contains("open") ? closeMenu() : openMenu();
+    });
+  });
+  scrim.addEventListener("click", closeMenu);
+  window.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+})();
+</script>
+</body>
+</html>
