@@ -12,7 +12,7 @@ Instalado como dependencias de **desarrollo** únicamente (Fase 1; las pruebas d
 |---|---|---|
 | pytest | 9.1.1 | requires_python ≥ 3.10 |
 | pytest-asyncio | 1.4.0 | `asyncio_mode = auto` en `backend/pytest.ini` |
-| httpx2 | 2.13.0 | **reemplaza a httpx**: Starlette 1.6.0 deprecó `httpx` en `TestClient` y recomienda `httpx2` (decisión confirmada por el usuario) |
+| httpx2 | 2.13.0 | **reemplaza a httpx**: Starlette 1.6.0 deprecó `httpx` en `TestClient` y recomienda `httpx2` (decisión confirmada por el usuario — ver **P18** en `DECISIONES.md`) |
 
 Configuración: `backend/pytest.ini` (`testpaths = tests`, `asyncio_mode = auto`, `asyncio_default_fixture_loop_scope = function`, `pythonpath = .`).
 

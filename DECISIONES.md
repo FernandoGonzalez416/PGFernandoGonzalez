@@ -4,7 +4,7 @@ Este archivo contiene **únicamente** decisiones reales: confirmadas por el usua
 
 Estado de las entradas: `APROBADO` (confirmado explícitamente), `PENDIENTE DE APROBACIÓN` (propuesto, en revisión, NO se implementa), `NO APLICA / POSPUESTO` (fuera de alcance actual).
 
-Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **P3/P3a/P13, P14, P15 y P16**). Mismo día, **P17 fue CONFIGURADO**: servidor Supabase MCP añadido a `opencode.json` (`read_only=true`, `features=database,docs,development`) y **autenticado** vía OAuth. Pendiente: aportar el **Project Ref** para limitar el alcance a un solo proyecto y reiniciar OpenCode para que la sesión cargue las herramientas MCP.
+Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **P3/P3a/P13, P14, P15 y P16**). Mismo día, **P17 fue CONFIGURADO**: servidor Supabase MCP añadido a `opencode.json` (`read_only=true`, `features=database,docs,development`) y **autenticado** vía OAuth. Pendiente: aportar el **Project Ref** para limitar el alcance a un solo proyecto y reiniciar OpenCode para que la sesión cargue las herramientas MCP. Mismo día, **P18 fue APROBADO**: `httpx2` como cliente HTTP de testing del backend (ver sección P18).
 
 ### Tabla de estado general
 
@@ -27,6 +27,7 @@ Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **
 | P15 | Esquema de datos detallado | APROBADO (2026-09-21, esquema inicial) |
 | P16 | Versiones detalladas | APROBADO (2026-09-21; no instalar aún) |
 | P17 | Supabase MCP | CONFIGURADO y AUTENTICADO (2026-09-21): solo lectura en `opencode.json`; pendiente Project Ref para scoping |
+| P18 | Cliente HTTP para tests del backend | APROBADO (2026-09-21): `httpx2` (fork "next generation" de Pydantic) en vez de `httpx` |
 
 > Regla: **no se cambia una decisión a APROBADO por haberla propuesto**. Solo el usuario lo aprueba.
 
@@ -622,6 +623,29 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 4. ⏳ Pendiente: aportar el **Project Ref** para añadir `project_ref=<REF>` y deshabilitar las herramientas de cuenta.
 5. ⏳ Pendiente: verificar la conexión pidiendo "listar las tablas actuales del schema".
 6. Para carga de credenciales de la aplicación usamos **variables de entorno** (nunca archivos del repo). No se requieren PAT en este flujo (OAuth dinámico); si en el futuro se necesita CI, se usará `SUPABASE_ACCESS_TOKEN` en variable de entorno, nunca commitearla.
+
+---
+
+## P18. Cliente HTTP para las pruebas del backend: `httpx2` (APROBADO — 2026-09-21)
+
+> **Aprobado directamente por Fernando el 2026-09-21**: se usa **`httpx2`** (fork "next generation" de Pydantic, `github.com/pydantic/httpx2`) como dependencia de testing del backend, **en lugar del `httpx` clásico**.
+
+### Contexto
+
+- Para probar la API con `fastapi.testclient` (TestClient de Starlette) se requiere un cliente HTTP de pruebas.
+- El `httpx` estándar quedó **desactualizado/deprecado para este uso** con las versiones vigentes de Starlette (**1.6.0+**): el TestClient dejó de recomendarlo e insta a migrar, emitiendo además un warning de deprecación si se usa.
+- Starlette 1.6.0 (incluido en FastAPI 0.141.1, según P16) importa `httpx2` como cliente preferido del TestClient (`import httpx2 as httpx`).
+
+### Decisión
+
+- Instalar **`httpx2==2.13.0`** como dependencia de **desarrollo** del backend (`backend/requirements-dev.txt`, pines exactos igual que P16), junto con `pytest` y `pytest-asyncio`.
+- **No** instalar `httpx` clásico en esta fase para testing: queda fuera del stack de pruebas.
+- Configuración verificada: `TestClient(app)` funciona con `httpx2` sin warnings (respuesta `/health` OK).
+
+### Consideraciones
+
+- `httpx2` es el reemplazo moderno recomendado por Starlette para `TestClient` (mismo criterio aplicado cuando se decidió el stack en `testing.md`).
+- `requirements-dev.txt` referencia `requirements.txt` (dependencias de runtime) y añade los pines de testing.
 
 ---
 
