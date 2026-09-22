@@ -2,6 +2,32 @@
 
 Las funcionalidades importantes requieren pruebas razonables. No se crean pruebas falsas para inflar cobertura.
 
+## Stack de testing (decidido 2026-09-21)
+
+Instalado como dependencias de **desarrollo** únicamente (Fase 1; las pruebas de negocio se escriben cuando exista lógica que probar).
+
+**Backend** (Python 3.14.x, FastAPI 0.141.1, Starlette 1.6.0) — pines exactos en `backend/requirements-dev.txt` (mismo criterio que P16):
+
+| Paquete | Versión | Nota |
+|---|---|---|
+| pytest | 9.1.1 | requires_python ≥ 3.10 |
+| pytest-asyncio | 1.4.0 | `asyncio_mode = auto` en `backend/pytest.ini` |
+| httpx2 | 2.13.0 | **reemplaza a httpx**: Starlette 1.6.0 deprecó `httpx` en `TestClient` y recomienda `httpx2` (decisión confirmada por el usuario) |
+
+Configuración: `backend/pytest.ini` (`testpaths = tests`, `asyncio_mode = auto`, `asyncio_default_fixture_loop_scope = function`, `pythonpath = .`).
+
+**Frontend** (React 19.3.0, Vite 8.3.0, TypeScript 6.0.3) — devDependencies con rango `^` + `package-lock.json` (mismo criterio que P16):
+
+| Paquete | Versión | Nota |
+|---|---|---|
+| vitest | 5.0.1 | exige Vite ^6.4\|^7\|^8 (ok 8.3.0); Node ^22.12\|^24 (ok) |
+| @testing-library/react | 16.3.3 | peer: React ^18\|^19, @testing-library/dom ^10 |
+| @testing-library/jest-dom | 7.0.1 | peer: vitest ≥ 0.32, @testing-library/dom <11 |
+| @testing-library/dom | 10.4.2 | peer obligatorio de los dos anteriores |
+| jsdom | 30.1.1 | entorno de pruebas |
+
+Configuración: `frontend/vitest.config.ts` (entorno `jsdom`, `setupFiles = ./src/test/setup.ts`), script `npm run test` (`vitest run`). El setup importa `@testing-library/jest-dom/vitest`. `vitest.config.ts` está incluido en `tsconfig.node.json`.
+
 ## Funcionalidades que deben tener pruebas
 
 Especialmente:
@@ -42,4 +68,5 @@ Deben existir pruebas para, al menos:
 
 ## Organización
 
-- Colocar las pruebas junto al código que verifican, siguiendo la convención que se adopte al inicializar cada parte (a definir con el usuario si no existe).
+- **Backend**: pytest con `testpaths = tests` en `backend/tests/`, un archivo por dominio (p. ej. `tests/test_ventas.py`, `tests/test_inventario.py`, `tests/test_alertas.py`).
+- **Frontend**: vitest coloca los tests junto al código que verifican (patrón `*.test.ts(x)`); ver ejemplo de convención en cuanto exista el primer test real.

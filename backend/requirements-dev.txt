@@ -1,0 +1,9 @@
+-r requirements.txt
+
+# Dependencias de DESARROLLO (testing). Pines exactos verificados 2026-09-21
+# contra PyPI (ver testing.md). Compatibles con Python 3.14.x y FastAPI 0.141.1.
+# httpx2 reemplaza a httpx: Starlette 1.6.0 (TestClient) lo recomienda y deprecó httpx.
+
+pytest==9.1.1
+pytest-asyncio==1.4.0
+httpx2==2.13.0
