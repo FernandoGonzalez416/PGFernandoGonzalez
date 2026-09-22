@@ -5,7 +5,7 @@
     "supabase": {
       "type": "remote",
       "enabled": true,
-      "url": "https://mcp.supabase.com/mcp?read_only=true&features=database,docs,development"
+      "url": "https://mcp.supabase.com/mcp?project_ref=spozipecnvhmchxvmsqt&read_only=true&features=database,docs,development"
     }
   }
 }

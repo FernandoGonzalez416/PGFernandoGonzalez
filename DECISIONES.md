@@ -26,7 +26,7 @@ Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **
 | P14 | Matriz de permisos | APROBADO (2026-09-21, con modificación) |
 | P15 | Esquema de datos detallado | APROBADO (2026-09-21, esquema inicial) |
 | P16 | Versiones detalladas | APROBADO (2026-09-21; no instalar aún) |
-| P17 | Supabase MCP | CONFIGURADO y AUTENTICADO (2026-09-21): solo lectura en `opencode.json`; pendiente Project Ref para scoping |
+| P17 | Supabase MCP | CONFIGURADO y AUTENTICADO (2026-09-21): solo lectura en `opencode.json`; **Project Ref aportado y aplicado** (2026-09-21); pendiente reiniciar OpenCode |
 | P18 | Cliente HTTP para tests del backend | APROBADO (2026-09-21): `httpx2` (fork "next generation" de Pydantic) en vez de `httpx` |
 
 > Regla: **no se cambia una decisión a APROBADO por haberla propuesto**. Solo el usuario lo aprueba.
@@ -589,7 +589,7 @@ Notas:
 
 ## P17. Conexión de Supabase vía MCP (CONFIGURADO Y AUTENTICADO — 2026-09-21; solo lectura)
 
-> **Estado 2026-09-21**: se aprobó el **enfoque solo lectura** y **quedó configurado y autenticado**: el servidor remoto `supabase` está en `opencode.json` (`read_only=true`, `features=database,docs,development`) y la sesión OAuth fue completada por el usuario en el navegador (`opencode mcp auth supabase`). Sigue pendiente: aportar el **Project Ref** (`xxxx` de `supabase.com/dashboard/project/xxxxxxxx`) para limitar el servidor a un solo proyecto (deshabilitando las herramientas de cuenta) y **reiniciar OpenCode** para que la sesión cargue las herramientas MCP.
+> **Estado 2026-09-21**: se aprobó el **enfoque solo lectura** y **quedó configurado y autenticado**: el servidor remoto `supabase` está en `opencode.json` (`read_only=true`, `features=database,docs,development`) y la sesión OAuth fue completada por el usuario en el navegador (`opencode mcp auth supabase`). El **Project Ref `spozipecnvhmchxvmsqt` fue aportado y aplicado** a la URL (`project_ref=spozipecnvhmchxvmsqt`, scoping a un solo proyecto; deshabilita las herramientas de cuenta) — **no es un secreto** (ni API key ni token), por lo que se commitea normal, sin variables de entorno. **Solo falta reiniciar OpenCode** para que la sesión cargue las herramientas MCP scoped al proyecto (reinicio manual del usuario, no posible desde dentro de la sesión actual).
 
 ### Qué configuración se necesita
 
@@ -611,6 +611,8 @@ Estado actual en `opencode.json` del proyecto (sin credenciales; solo la URL y o
 
 Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<REF>` para limitar el servidor a **un solo proyecto** (desactiva herramientas de gestión de cuentas) → `https://mcp.supabase.com/mcp?project_ref=<REF>&read_only=true&features=database,docs,development`.
 
+- **Project Ref APORTADO y APLICADO (2026-09-21)**: `spozipecnvhmchxvmsqt` — la URL activa es `https://mcp.supabase.com/mcp?project_ref=spozipecnvhmchxvmsqt&read_only=true&features=database,docs,development`. No es un secreto (no es API key ni token), se commitea normal, sin variables de entorno.
+
 - `read_only=true`: se trabaja en **modo solo lectura** (inspección del esquema actual). Al autorizar migraciones se cambia de forma explícita e informada.
 - `features=database,docs,development`: expone solo consultas/tablas/migraciones/lógica de desarrollo y búsqueda de docs; sin Storage ni Branching.
 - El **token de autenticación NO se guarda en el repositorio**: opencode lo almacena en su propio store de credenciales (OAuth dinámico; no se requirió PAT).
@@ -619,8 +621,8 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 
 1. ✅ Añadido el servidor `supabase` a `opencode.json` del proyecto (solo lectura).
 2. ✅ Autenticado: `opencode mcp auth supabase` — el usuario completó el flujo OAuth en el navegador. Verificado con `opencode mcp auth list` → `supabase ✓ authenticated`.
-3. ⏳ Pendiente: **reiniciar OpenCode** para que la sesión cargue las herramientas MCP (los cambios de `opencode.json` no se recargan en caliente).
-4. ⏳ Pendiente: aportar el **Project Ref** para añadir `project_ref=<REF>` y deshabilitar las herramientas de cuenta.
+3. ⏳ Pendiente (manual del usuario): **reiniciar OpenCode** para que la sesión cargue las herramientas MCP (los cambios de `opencode.json` no se recargan en caliente).
+4. ✅ **Project Ref aportado y aplicado (2026-09-21)**: `spozipecnvhmchxvmsqt` en la URL (`project_ref=spozipecnvhmchxvmsqt`), deshabilita herramientas de cuenta. No es un secreto; se commitea normal.
 5. ⏳ Pendiente: verificar la conexión pidiendo "listar las tablas actuales del schema".
 6. Para carga de credenciales de la aplicación usamos **variables de entorno** (nunca archivos del repo). No se requieren PAT en este flujo (OAuth dinámico); si en el futuro se necesita CI, se usará `SUPABASE_ACCESS_TOKEN` en variable de entorno, nunca commitearla.
 
@@ -656,7 +658,7 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 Siguen pendientes:
 - **R4. Estrategia offline definitiva** y su tecnología (P2): se documentará cuando llegue el momento; no bloquea la primera versión.
 - **R5. Detalles de despliegue/hosting** (P12): cuando la aplicación esté avanzada.
-- **R7/R12. Supabase MCP (P17)**: CONFIGURADO y AUTENTICADO (2026-09-21). Pendientes menores: aportar el **Project Ref** para scoping (`project_ref=<REF>`) y **reiniciar OpenCode** para cargar las herramientas en la sesión. No crear ni modificar objetos en Supabase sin informar antes.
+- **R7/R12. Supabase MCP (P17)**: CONFIGURADO y AUTENTICADO (2026-09-21). **Project Ref `spozipecnvhmchxvmsqt` aportado y aplicado** (2026-09-21). Pendiente únicamente: **reiniciar OpenCode** (manual, hecho por el usuario) para cargar las herramientas MCP scoped al proyecto en la sesión. No crear ni modificar objetos en Supabase sin informar antes.
 - **Inicio del desarrollo**: crear código (React/FastAPI/Node/Supabase/IA), instalar dependencias o crear tablas queda **prohibido hasta orden explícita** del usuario.
 
 ---
