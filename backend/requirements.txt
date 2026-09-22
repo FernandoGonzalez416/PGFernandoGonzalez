@@ -1,4 +1,8 @@
+# Dependencias del backend (FastAPI). Pines EXACTOS según P16 (DECISIONES.md).
+# scikit-learn queda LISTADO para la fase de predicción (P3/P3a/P13); NO se instala ni se usa todavía.
+
 fastapi==0.141.1
 uvicorn==0.53.0
 pydantic==2.13.5
 python-dotenv==1.2.3
+scikit-learn==1.9.1

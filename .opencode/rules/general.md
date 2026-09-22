@@ -34,12 +34,21 @@ Reglas transversales de trabajo para cualquier tarea en este repositorio. Aplica
 - No sacrificar la arquitectura por velocidad, pero **no añadir complejidad innecesaria** para problemas que todavía no existen.
 - Una solución simple inicial es válida si no cierra innecesariamente posibilidades futuras.
 
+## Calidad del código
+
+- **Nombres explícitos**, sin abreviaturas crípticas ni siglas inventadas: el identificador debe comunicar su propósito por sí solo (p. ej. `calcularTotalVenta`, no `calcTV`).
+- **Funciones con una sola responsabilidad**: una función hace una cosa y la hace bien; si hay que explicar su comportamiento en una frase compleja, conviene dividirla.
+- **Prohibido código muerto**, código comentado "por si acaso" y TODOs sin nota en `DECISIONES.md`. Si un bloque no se usa, se elimina; si se deja un pendiente, se registra la decisión/nota y se referencia aquí.
+- **Antes de cambiar una firma de función o un contrato de API, revisar todos los consumidores existentes** (frontend, servicios, tests, tareas y, a futuro, móvil) y evaluar compatibilidad antes de aplicar el cambio.
+
 ## Control de versiones (P10)
 
 - El proyecto usa **Git** desde el inicio con repositorio remoto **https://github.com/FernandoGonzalez416/PGFernandoGonzalez** (no crear otro).
 - Mantener el **`.gitignore`** cubriendo Node.js, Python, React, FastAPI, `.env`, credenciales, temporales, builds y dependencias.
 - **Nunca subir secretos** al repositorio (local ni remoto).
 - Los mensajes de commit se escriben en español y describen el cambio real.
+- **Un commit = un cambio lógico coherente**: agrupar los cambios por unidad de trabajo; no mezclar tareas independientes en un mismo commit.
+- **Formato de mensaje**: imperativo + prefijo `tipo: descripción` con tipos `feat` / `fix` / `refactor` / `test` / `docs` / `chore`. Ejemplo: `feat: registrar ventas con descuento de inventario`.
 
 ## Idioma y estilo
 

@@ -12,10 +12,21 @@ Antes de modificar código:
 8. **Revisar los cambios**: verificar el diff y el comportamiento antes de terminar.
 9. **Informar qué se modificó**: archivos, decisiones y pendientes.
 
+## Antes de escribir código de una fase
+
+- **Releer** `AGENTS.md`, `DECISIONES.md` y la regla del dominio correspondiente (`.opencode/rules/`) antes de empezar a modificar código.
+- Si la fase introduce código nuevo, confirmar primero el estado de lo aprobado y de lo pendiente de decisión en `DECISIONES.md`.
+
+## Regla "no inventar" aplicada al workfow
+
+- Si algo **no está definido** (característica, campo, contrato, dependencia, arquitectura), **detener**, **explicar qué falta definir**, **proponer alternativas** y **pedir confirmación explícita** al usuario antes de decidir.
+- No resolver ambigüedades con suposiciones "razonables" cuando la decisión afecte arquitectura, modelo de datos, dependencias o contratos de API.
+
 ## Reglas
 
 - **No realizar refactorizaciones masivas** cuando la tarea no las requiere.
 - **No modificar archivos no relacionados** sin justificación.
+- Los **cambios de arquitectura, aunque parezcan una mejora obvia, requieren confirmación explícita** del usuario antes de aplicarse. Confirmar siempre antes de: agregar una dependencia nueva, crear un servicio/módulo/tabla, cambiar un esquema o desplegar.
 - Si el cambio toca arquitectura, modelo de datos, dependencias importantes o contratos de API, **confirmar antes de implementar** (ver `AGENTS.md` para la jerarquía de autoridad).
 - Todo cambio debe mantener la coherencia con las reglas del proyecto.
 - Al terminar, verificar que no hayan quedado secretos, archivos temporales ni código sin usar.
