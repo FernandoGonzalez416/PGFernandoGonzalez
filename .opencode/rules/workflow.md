@@ -1,5 +1,7 @@
 # Reglas de workflow de desarrollo
 
+Antes de cualquier tarea que cree, modifique o borre archivos, ejecutar `pwd` (o `Get-Location`) y `git remote -v`, y confirmar explícitamente que el remote apunta a FernandoGonzalez416/PGFernandoGonzalez antes de continuar. Si no coincide, detenerse y reportarlo — nunca asumir que el directorio es el correcto.
+
 Antes de modificar código:
 
 1. **Entender la tarea**: objetivo, entradas, salidas esperadas y contexto.
