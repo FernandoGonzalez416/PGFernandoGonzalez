@@ -1,6 +1,6 @@
 import pytest
 
-from backend.app.core.capacidades import (
+from app.core.capacidades import (
     Capacidad,
     CAPACIDADES_POR_ROL,
     verificar_anulacion_venta,
