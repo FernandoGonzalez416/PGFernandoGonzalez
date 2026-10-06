@@ -173,22 +173,23 @@ async def crear_producto(
 
             producto_id = UUID(str(fila))
 
+            await sesion.execute(
+                text(
+                    """
+                    INSERT INTO existencia (producto_id, almacen_id, cantidad)
+                    VALUES (:producto_id, :almacen_id, :cantidad)
+                    ON CONFLICT (producto_id, almacen_id) DO UPDATE
+                    SET cantidad = existencia.cantidad + EXCLUDED.cantidad
+                    """
+                ),
+                {
+                    "producto_id": producto_id,
+                    "almacen_id": almacen_id,
+                    "cantidad": datos.cantidad_inicial,
+                },
+            )
+
             if datos.cantidad_inicial > 0:
-                await sesion.execute(
-                    text(
-                        """
-                        INSERT INTO existencia (producto_id, almacen_id, cantidad)
-                        VALUES (:producto_id, :almacen_id, :cantidad)
-                        ON CONFLICT (producto_id, almacen_id) DO UPDATE
-                        SET cantidad = existencia.cantidad + EXCLUDED.cantidad
-                        """
-                    ),
-                    {
-                        "producto_id": producto_id,
-                        "almacen_id": almacen_id,
-                        "cantidad": datos.cantidad_inicial,
-                    },
-                )
                 await sesion.execute(
                     text(
                         """

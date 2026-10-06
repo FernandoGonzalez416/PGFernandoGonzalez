@@ -318,6 +318,8 @@ cd backend
 ```
 Esperado: `0 failed`, con `test_ventas.py::...::test_stock_insuficiente_no_deja_rastro` y `...::test_folio_incremental_en_el_anio` en Passed.
 
+> **Nota (2026-10-06):** el criterio original decía `pytest -q`, pero desde P20 eso excluye las pruebas de integración (`addopts = -m "not integracion"`). Para validar este bloque hay que correr **ambas suites**: `pytest -q` y `pytest -m integracion -q`.
+
 ```powershell
 cd backend
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000

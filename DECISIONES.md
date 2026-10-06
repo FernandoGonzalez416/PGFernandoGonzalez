@@ -847,13 +847,37 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 
 ---
 
-## Desviaciones detectadas entre el plan y la implementación (Fase A)
+## P25. Ajuste de inventario: dirección, forma del request y contrato de los GET (APROBADO — 2026-10-06)
+
+### Contexto
+
+- La Fase B (`backend/docs/PLAN_FASE3_4.md`) define `POST /api/inventario/ajustes` y su regla 8 pide `movimiento_inventario` con `tipo='ajuste'` y `referencia_tipo='ajuste'`, pero **no dice cómo se expresa si el stock sube o baja**.
+- El DDL real impone dos restricciones: `chk_movimiento_cantidad CHECK (cantidad > 0)` y **ninguna columna de signo**. Con `tipo='ajuste'` fijo, la dirección del cambio quedaría solo en el texto de la nota y la bitácora dejaría de ser reconstruible.
+- Tampoco estaban definidos los campos de `ExistenciaAjuste` (el plan la lista pero no la especifica) ni los filtros/respuesta de `GET /api/inventario/existencia` y `GET /api/inventario/movimientos`.
+
+### Decisión (elegida por Fernando el 2026-10-06)
+
+1. **El request manda un delta con signo y `tipo` codifica la dirección.** `ExistenciaAjuste.cantidad` es un delta firmado (positivo suma, negativa resta). El servicio escribe `tipo='entrada'` si sube y `tipo='salida'` si baja, siempre con `referencia_tipo='ajuste'` y `movimiento.cantidad = |delta|`. **Esto desvía la letra de la regla 8 del plan** (que pedía `tipo='ajuste'`): se eligió porque es la única lectura que deja la bitácora reconstruible sin ambigüedad. `tipo='ajuste'` sigue siendo un valor válido del CHECK y queda disponible si más adelante se necesita marcarlo de otra forma.
+2. **`ExistenciaAjuste` vive en `app/schemas/existencia.py`** (donde el plan la lista) con `producto_id`, `cantidad` y `nota`. `extra="forbid"`; `nota` no puede quedar vacía tras `strip()`; `cantidad` no puede ser 0. **Si el producto no tiene fila en `existencia`** (alta con cantidad inicial 0), el ajuste **la crea** con `INSERT ... ON CONFLICT`, en vez de responder 404.
+3. **Los dos GET**: `GET /api/inventario/existencia` devuelve la lista **global** de existencias (todas las filas, todas las sucursales) con filtro opcional `producto_id`; `GET /api/inventario/movimientos` devuelve la lista paginada (`limite` default 50 `ge=1 le=100`, `desplazamiento` `ge=0`, igual que productos) con filtro opcional `producto_id`, orden `fecha DESC`. El schema `MovimientoRead` replica las columnas de la tabla, sin campos derivados.
+
+### Consideraciones
+
+- **P19 sigue intacta**: ningún request expone `almacen_id`; todo ajuste va al almacén `ALMACEN_PREDETERMINADO`.
+- Un ajuste que dejaría `existencia.cantidad < 0` se rechaza con **409** (`StockInsuficienteError`) **antes** de escribir, dentro del SAVEPOINT: no queda ni fila de existencia tocada ni movimiento. El mensaje nombra el producto y las unidades disponibles.
+- Si el producto no existe → **404** (se valida antes de tocar existencias).
+- `POST /api/inventario/ajustes` responde **201**, por consistencia con los otros POST que crean una fila (`movimiento_inventario`).
+- Los listados solo devuelven **filas de `existencia`**: un producto alta con cantidad 0 no aparece, porque no tiene fila. La cantidad 0 de esos productos ya es visible en `GET /api/productos` (`existencia` con `COALESCE`).
+
+---
+
 
 Registradas aquí, **sin corregir silenciosamente** ni el plan ni el código. Las ya resueltas se marcan con **RESUELTO + fecha** (queda el texto original bajo cada una para no perder el origen de la discrepancia):
 
 - **`limite` en la paginación — RESUELTA el 2026-10-06**: el "piso 50" del plan se interpreta como el **valor por defecto** (ya implementado: `default=50, ge=1, le=100`), no como un mínimo obligatorio. **No se cambió el código.** Texto original de la discrepancia: §2.4 dice "`limit` obligatorio con piso 50", pero el criterio de aceptación invoca `GET /api/productos?q=shampoo` **sin** `limit`. Sigue admitiendo `limit=1`.
 - **`codigo` del producto — RESUELTO el 2026-10-06**: el plan declara `UNIQUE` pero no dice si `codigo` es inmutable. Se resolvió aplicando `model_config = ConfigDict(extra="forbid")` (Pydantic v2.13.5) a los **3 schemas `Update`** — `ProductoUpdate`, `CategoriaUpdate` y `ProveedorUpdate` —, de modo que cualquier campo no declarado (`codigo`, `id`, `created_at`, …) devuelve **422** en vez de descartarse en silencio. Cubierto por `TestCamposNoEditables` en `test_productos.py`, `test_categorias.py` y `test_proveedores.py`. El plan sigue sin definir la inmutabilidad de `codigo` como regla de negocio: ahora el intento es explícito (422), pero queda pendiente si la API debe aceptar y actualizar ese campo en el futuro.
-- **`ExistenciaAjuste`**: el plan la lista en `app/schemas/existencia.py`, pero **ningún endpoint ni servicio de la Fase A la consume** (solo hay lectura de existencias). No se creó para no dejar código muerto; se implementará junto al endpoint de ajuste de stock.
+- **Alta con `cantidad_inicial=0` no creaba la fila `existencia` — RESUELTA el 2026-10-06**: el servicio guardaba la fila tras `if cantidad_inicial > 0`, de modo que un producto nuevo sin entradas no tenía fila en `existencia` y desaparecía de `GET /api/inventario/existencia` —invisible para las alertas de bajo stock (requerimiento funcional 3). Se corrigió `app/services/productos.py`: **la fila se crea siempre** (con `cantidad=0` si no hay entrada) y **solo el `movimiento_inventario` sigue siendo condicional**, porque su `CHECK (cantidad > 0)` lo impide. Verificado en la base: no hay ningún trigger de `producto` que cree `existencia`, y `chk_existencia_cantidad` acepta `0`. Cubierto por `test_cantidad_cero_no_crea_movimiento` (reforzado) y `test_producto_con_cantidad_cero_sigue_apareciendo_en_el_listado`.
+- **`ExistenciaAjuste` — RESUELTA el 2026-10-06 (P25)**: se creó en `app/schemas/existencia.py` junto al endpoint de ajuste de stock, con `producto_id`, `cantidad` y `nota`. Texto original de la discrepancia: el plan la lista en `app/schemas/existencia.py`, pero ningún endpoint ni servicio de la Fase A la consume (solo hay lectura de existencias); no se creó entonces para no dejar código muerto.
 - **Barra final en las rutas**: los decoradores del ejemplo del plan (`@router.get("/")` con `prefix="/api/productos"`) publicaban `/api/productos/` y obligaban a un **307** desde la URL del criterio de aceptación. Se registraron con `@router.get("")` para que la ruta canónica sea `/api/productos`, tal como documenta la tabla de endpoints del plan.
 - **`a_decimal()` docstring vs código — RESUELTA el 2026-10-06**: **el código es correcto**: acepta `float` a propósito solo cuando su valor es exactamente representable (`1.5`, `2.0`), comportamiento verificado por tests (`test_dinero.py`). Se corrigió el **docstring** en `app/core/dinero.py` para describir el comportamiento real en vez de negarlo. Texto original de la discrepancia: acepta un `float` si su valor exacto es representable (`1.5`, `2.0`), aunque su docstring afirmaba que un `float` nunca es entrada válida.
 

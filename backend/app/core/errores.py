@@ -62,6 +62,14 @@ class VencimientoInvalidoError(ErrorDeDominio):
     """La fecha de vencimiento enviada no es admisible."""
 
 
+class StockInsuficienteError(ErrorDeDominio):
+    """El movimiento dejaría la existencia por debajo de cero.
+
+    El mensaje nombra el producto y las unidades disponibles, que es lo que
+    el usuario necesita ver para decidir qué hacer.
+    """
+
+
 def _menciona_restriccion(error: IntegrityError, nombre: str) -> bool:
     """¿La violación de integridad corresponde a la restricción `nombre`?
 

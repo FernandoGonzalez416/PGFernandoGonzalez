@@ -130,6 +130,21 @@ class TestAltaDeProducto:
         assert producto.existencia == Decimal("0.00")
         assert await _contar_movimientos(sesion_de_pruebas, producto.id) == 0
 
+        cantidad_en_almacen = (
+            await sesion_de_pruebas.execute(
+                text(
+                    """
+                    SELECT cantidad FROM existencia
+                    WHERE producto_id = :producto_id
+                    """
+                ),
+                {"producto_id": producto.id},
+            )
+        ).scalar_one_or_none()
+        assert cantidad_en_almacen == Decimal("0.00"), (
+            "La fila de existencia debe crearse siempre, también en cero"
+        )
+
     async def test_la_existencia_queda_en_el_almacen_por_defecto(
         self,
         sesion_de_pruebas: AsyncSession,

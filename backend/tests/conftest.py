@@ -146,22 +146,28 @@ async def usuario_de_pruebas(sesion_de_pruebas: AsyncSession) -> UUID:
     ).scalar_one()
     return usuario_id
 
-def simular_rol(sesion: AsyncSession, rol: str) -> None:
+def simular_rol(sesion: AsyncSession, rol: str, usuario_id: UUID | None = None) -> None:
     """Sustituye autenticación y sesión para que la app vea al usuario con `rol`.
 
     Solo existe un usuario administrador real en la base, así que los demás roles
     se simulan (P14). No hace falta JWT: `get_current_usuario` sustituida nunca
     llega a validar el token.
 
+    `usuario_id` permite apuntar a una fila real de `usuario` cuando la
+    operación escribe (los `INSERT` con FK a `usuario` fallan con el id fijo
+    por defecto, que no existe en el esquema de pruebas).
+
     El llamador limpia `app.dependency_overrides` al terminar su bloque try/finally.
     """
+
+    identidad = usuario_id or UUID("00000000-0000-0000-0000-0000000000a1")
 
     async def _sesion():
         yield sesion
 
     app.dependency_overrides[get_db_session] = _sesion
     app.dependency_overrides[get_current_usuario] = lambda: UsuarioAutenticado(
-        id="00000000-0000-0000-0000-0000000000a1",
+        id=str(identidad),
         auth_id="00000000-0000-0000-0000-0000000000a2",
         nombre="Usuario de prueba",
         email="usuario@test.invalid",

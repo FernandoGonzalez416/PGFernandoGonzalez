@@ -2,6 +2,7 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.api.categorias import router as categorias_router
+from app.api.inventario import router as inventario_router
 from app.api.me import router as me_router
 from app.api.productos import router as productos_router
 from app.api.proveedores import router as proveedores_router
@@ -11,6 +12,7 @@ from app.core.errores import (
     EntidadNoEncontradaError,
     ErrorDeDominio,
     ProductoConExistenciasError,
+    StockInsuficienteError,
     VencimientoInvalidoError,
 )
 
@@ -18,6 +20,7 @@ CODIGO_POR_ERROR: dict[type[ErrorDeDominio], int] = {
     EntidadNoEncontradaError: 404,
     ConflictoDeUnicidadError: 409,
     ProductoConExistenciasError: 409,
+    StockInsuficienteError: 409,
     VencimientoInvalidoError: 422,
 }
 
@@ -51,6 +54,7 @@ app.include_router(me_router, prefix="/api", tags=["me"])
 app.include_router(productos_router, prefix="/api/productos", tags=["productos"])
 app.include_router(categorias_router, prefix="/api/categorias", tags=["categorias"])
 app.include_router(proveedores_router, prefix="/api/proveedores", tags=["proveedores"])
+app.include_router(inventario_router, prefix="/api/inventario", tags=["inventario"])
 
 
 @app.get("/")
