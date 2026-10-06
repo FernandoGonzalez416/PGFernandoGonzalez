@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+﻿from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -7,7 +7,8 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.db import get_db_session
+from conftest import simular_rol
+
 from app.core.errores import (
     CategoriaNoEncontradaError,
     CodigoProductoDuplicadoError,
@@ -16,7 +17,6 @@ from app.core.errores import (
     ProveedorNoEncontradoError,
     VencimientoInvalidoError,
 )
-from app.core.security import UsuarioAutenticado, get_current_usuario
 from app.main import app
 from app.schemas.producto import ProductoCreate, ProductoUpdate
 from app.services import productos as servicio
@@ -635,32 +635,6 @@ class TestLeerYActualizar:
         assert actualizado.codigo == "P-FIJO"
 
 
-def _simular_rol(sesion: AsyncSession, rol: str) -> None:
-    """Sustituye autenticación y sesión para dejar al usuario con el rol dado.
-
-    Solo existe un usuario administrador real en la base, así que los demás roles
-    se simulan (P14). No hace falta JWT: `get_current_usuario` sustituida nunca
-    llega a validar el token.
-    """
-
-    async def _sesion():
-        yield sesion
-
-    app.dependency_overrides[get_db_session] = _sesion
-    app.dependency_overrides[get_current_usuario] = lambda: UsuarioAutenticado(
-        id="00000000-0000-0000-0000-0000000000a1",
-        auth_id="00000000-0000-0000-0000-0000000000a2",
-        nombre="Usuario de prueba",
-        email="usuario@test.invalid",
-        rol=rol,
-        activo=True,
-    )
-
-
-def _simular_padre(sesion: AsyncSession) -> None:
-    _simular_rol(sesion, "padre")
-
-
 class TestPermisosDelPadre:
     """Contraste directo de P14: el padre consulta, pero no escribe.
 
@@ -682,7 +656,7 @@ class TestPermisosDelPadre:
             almacen_de_pruebas,
             nombre="Shampoo de prueba",
         )
-        _simular_padre(sesion_de_pruebas)
+        simular_rol(sesion_de_pruebas, "padre")
         try:
             async with httpx2.AsyncClient(
                 transport=httpx2.ASGITransport(app=app),
@@ -703,7 +677,7 @@ class TestPermisosDelPadre:
         almacen_de_pruebas: str,
     ) -> None:
         categoria_id = await _crear_categoria(sesion_de_pruebas)
-        _simular_padre(sesion_de_pruebas)
+        simular_rol(sesion_de_pruebas, "padre")
         try:
             async with httpx2.AsyncClient(
                 transport=httpx2.ASGITransport(app=app),
@@ -748,7 +722,7 @@ class TestCamposNoEditables:
             almacen_de_pruebas,
             nombre="Producto con codigo fijo",
         )
-        _simular_rol(sesion_de_pruebas, "propietario")
+        simular_rol(sesion_de_pruebas, "propietario")
         try:
             async with httpx2.AsyncClient(
                 transport=httpx2.ASGITransport(app=app),

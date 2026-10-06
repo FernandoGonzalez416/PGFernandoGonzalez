@@ -848,10 +848,10 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 
 ## Desviaciones detectadas entre el plan y la implementación (Fase A)
 
-Registradas aquí, **sin corregir silenciosamente** ni el plan ni el código:
+Registradas aquí, **sin corregir silenciosamente** ni el plan ni el código. Las ya resueltas se marcan con **RESUELTO + fecha** (queda el texto original bajo cada una para no perder el origen de la discrepancia):
 
 - **`limite` en la paginación**: §2.4 dice "`limit` obligatorio con piso 50", pero el criterio de aceptación invoca `GET /api/productos?q=shampoo` **sin** `limit`. Implementado como `default=50, ge=1, le=100`; sigue admitiendo `limit=1`.
-- **`codigo` del producto**: el plan declara `UNIQUE` pero no dice si es inmutable. `ProductoUpdate` no lo expone, así que un `PATCH` con `codigo` lo **ignora en silencio** (Pydantic descarta campos extra). Queda pendiente decidir entre rechazarlo como 422 o hacerlo inmutable explícito.
+- **`codigo` del producto — RESUELTO el 2026-10-06**: el plan declara `UNIQUE` pero no dice si `codigo` es inmutable. Se resolvió aplicando `model_config = ConfigDict(extra="forbid")` (Pydantic v2.13.5) a los **3 schemas `Update`** — `ProductoUpdate`, `CategoriaUpdate` y `ProveedorUpdate` —, de modo que cualquier campo no declarado (`codigo`, `id`, `created_at`, …) devuelve **422** en vez de descartarse en silencio. Cubierto por `TestCamposNoEditables` en `test_productos.py`, `test_categorias.py` y `test_proveedores.py`. El plan sigue sin definir la inmutabilidad de `codigo` como regla de negocio: ahora el intento es explícito (422), pero queda pendiente si la API debe aceptar y actualizar ese campo en el futuro.
 - **`ExistenciaAjuste`**: el plan la lista en `app/schemas/existencia.py`, pero **ningún endpoint ni servicio de la Fase A la consume** (solo hay lectura de existencias). No se creó para no dejar código muerto; se implementará junto al endpoint de ajuste de stock.
 - **Barra final en las rutas**: los decoradores del ejemplo del plan (`@router.get("/")` con `prefix="/api/productos"`) publicaban `/api/productos/` y obligaban a un **307** desde la URL del criterio de aceptación. Se registraron con `@router.get("")` para que la ruta canónica sea `/api/productos`, tal como documenta la tabla de endpoints del plan.
 - **`a_decimal()`**: acepta un `float` si su valor exacto es representable (`1.5`, `2.0`), aunque su docstring afirma que un `float` nunca es entrada válida. Discrepancia entre código y documentación, pendiente de unificar.

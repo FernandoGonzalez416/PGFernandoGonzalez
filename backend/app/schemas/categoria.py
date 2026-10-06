@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CategoriaCreate(BaseModel):
@@ -10,6 +10,8 @@ class CategoriaCreate(BaseModel):
 
 
 class CategoriaUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     nombre: str | None = Field(default=None, min_length=1, max_length=100)
     descripcion: str | None = None
     activo: bool | None = None

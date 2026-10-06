@@ -1,10 +1,14 @@
 from decimal import Decimal
 from uuid import uuid4
 
+import httpx2
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from conftest import simular_rol
+
 from app.core.errores import ProveedorNoEncontradoError
+from app.main import app
 from app.schemas.proveedor import ProveedorCreate, ProveedorUpdate
 from app.services import proveedores as servicio
 
@@ -149,3 +153,32 @@ class TestLeerYActualizar:
             await servicio.actualizar_proveedor(
                 sesion_de_pruebas, uuid4(), ProveedorUpdate(nombre="X")
             )
+class TestCamposNoEditables:
+    """Un campo no declarado en `ProveedorUpdate` se rechaza con 422."""
+
+    async def test_patch_proveedor_con_campo_no_editable_devuelve_422(
+        self, sesion_de_pruebas: AsyncSession
+    ) -> None:
+        proveedor = await servicio.crear_proveedor(
+            sesion_de_pruebas,
+            ProveedorCreate(nombre=f"Con id fijo-{uuid4().hex[:6]}"),
+        )
+        simular_rol(sesion_de_pruebas, "propietario")
+        try:
+            async with httpx2.AsyncClient(
+                transport=httpx2.ASGITransport(app=app),
+                base_url="http://pruebas",
+            ) as cliente:
+                respuesta = await cliente.patch(
+                    f"/api/proveedores/{proveedor.id}",
+                    json={"created_at": "2026-10-05T00:00:00"},
+                )
+        finally:
+            app.dependency_overrides.clear()
+
+        assert respuesta.status_code == 422
+        errores = respuesta.json()["detail"]
+        assert any("created_at" in str(detalle["loc"]) for detalle in errores)
+        assert (
+            await servicio.obtener_proveedor(sesion_de_pruebas, proveedor.id)
+        ).nombre == proveedor.nombre

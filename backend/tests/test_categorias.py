@@ -1,9 +1,13 @@
 from uuid import uuid4
 
+import httpx2
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from conftest import simular_rol
+
 from app.core.errores import CategoriaDuplicadaError, CategoriaNoEncontradaError
+from app.main import app
 from app.schemas.categoria import CategoriaCreate, CategoriaUpdate
 from app.services import categorias as servicio
 
@@ -151,3 +155,36 @@ class TestActualizar:
             await servicio.actualizar_categoria(
                 sesion_de_pruebas, uuid4(), CategoriaUpdate(nombre="X")
             )
+class TestCamposNoEditables:
+    """Un campo no declarado en `CategoriaUpdate` se rechaza con 422.
+
+    Mismo criterio que `test_productos.py::TestCamposNoEditables`: con
+    `extra="forbid"` el PATCH deja de devolver un 200 silencioso que descartaba
+    el campo.
+    """
+
+    async def test_patch_categoria_con_campo_no_editable_devuelve_422(
+        self, sesion_de_pruebas: AsyncSession
+    ) -> None:
+        categoria = await servicio.crear_categoria(
+            sesion_de_pruebas, CategoriaCreate(nombre=f"Con id fijo-{uuid4().hex[:6]}")
+        )
+        simular_rol(sesion_de_pruebas, "propietario")
+        try:
+            async with httpx2.AsyncClient(
+                transport=httpx2.ASGITransport(app=app),
+                base_url="http://pruebas",
+            ) as cliente:
+                respuesta = await cliente.patch(
+                    f"/api/categorias/{categoria.id}",
+                    json={"id": str(categoria.id)},
+                )
+        finally:
+            app.dependency_overrides.clear()
+
+        assert respuesta.status_code == 422
+        errores = respuesta.json()["detail"]
+        assert any("id" in str(detalle["loc"]) for detalle in errores)
+        assert (
+            await servicio.obtener_categoria(sesion_de_pruebas, categoria.id)
+        ).nombre == categoria.nombre

@@ -24,6 +24,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core import config
+from app.core.db import get_db_session
+from app.core.security import UsuarioAutenticado, get_current_usuario
+from app.main import app
 
 # pytest no carga el .env por su cuenta; lo hacemos aquí para que
 # DATABASE_URL_TEST pueda definirse en backend/.env (ignorado por git).
@@ -142,3 +145,26 @@ async def usuario_de_pruebas(sesion_de_pruebas: AsyncSession) -> UUID:
         )
     ).scalar_one()
     return usuario_id
+
+def simular_rol(sesion: AsyncSession, rol: str) -> None:
+    """Sustituye autenticación y sesión para que la app vea al usuario con `rol`.
+
+    Solo existe un usuario administrador real en la base, así que los demás roles
+    se simulan (P14). No hace falta JWT: `get_current_usuario` sustituida nunca
+    llega a validar el token.
+
+    El llamador limpia `app.dependency_overrides` al terminar su bloque try/finally.
+    """
+
+    async def _sesion():
+        yield sesion
+
+    app.dependency_overrides[get_db_session] = _sesion
+    app.dependency_overrides[get_current_usuario] = lambda: UsuarioAutenticado(
+        id="00000000-0000-0000-0000-0000000000a1",
+        auth_id="00000000-0000-0000-0000-0000000000a2",
+        nombre="Usuario de prueba",
+        email="usuario@test.invalid",
+        rol=rol,
+        activo=True,
+    )

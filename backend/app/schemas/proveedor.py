@@ -2,7 +2,7 @@
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.dinero import a_cuantia
 
@@ -22,6 +22,8 @@ class ProveedorCreate(BaseModel):
 
 
 class ProveedorUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     nombre: str | None = Field(default=None, min_length=1, max_length=150)
     contacto: str | None = None
     telefono: str | None = None
