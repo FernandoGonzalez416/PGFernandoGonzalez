@@ -1,6 +1,6 @@
 -- 14_enable_rls.sql
 -- Habilita RLS en las 13 tablas con denegación total por defecto (sin políticas).
--- FastAPI conecta directo como propietario de la base (postgres), que tampoco pasa por RLS. No se usa service_role vía PostgREST en este proyecto (ver P19).
+-- FastAPI conecta directo como propietario de la base (postgres), que tampoco pasa por RLS. No se usa service_role vía PostgREST en este proyecto (ver P23).
 -- anon/authenticated quedan sin acceso hasta que se agreguen políticas explícitas,
 -- una vez decidido el patrón de acceso del frontend.
 
