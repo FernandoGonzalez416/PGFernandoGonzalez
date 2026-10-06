@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.me import router as me_router
 from app.core import config
 
 app = FastAPI(
@@ -7,6 +8,8 @@ app = FastAPI(
     version=config.APP_VERSION,
     description="API principal: inventarios, ventas, alertas, reportes y predicción.",
 )
+
+app.include_router(me_router)
 
 
 @app.get("/")
