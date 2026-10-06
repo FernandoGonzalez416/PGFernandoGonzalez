@@ -11,13 +11,14 @@ def redondear(valor: Decimal) -> Decimal:
 
 
 def a_decimal(valor: TiposAceptados) -> Decimal:
-    """Convierte a `Decimal` aceptando `str`, `Decimal` e `int`.
+    """Convierte a `Decimal` aceptando `str`, `Decimal`, `int` y `float`.
 
-    Un `float` se rechaza salvo que sea exactamente representable por su
-   decimal más corto: `1.5` y `2.0` pasan, `0.1` y `2.675` no. Es la diferencia
-    entre `0.1` (que en binario vale 0.1000000000000000055) y `2.675` (que vale
-    2.674999...), donde redondear a dos decimales daría 0.10 y 2.67 en lugar de
-    0.10 y 2.68. Para dinero, un `float` nunca es una entrada válida.
+    Un `float` se acepta **solo** si su valor es exactamente representable:
+    `1.5` y `2.0` pasan, `0.1` y `2.675` no. Es la diferencia entre `0.1`
+    (que en binario vale 0.1000000000000000055) y `1.5` (que es exacto);
+    un `float` inexacto se rechaza con `TypeError` en lugar de corromper la
+    cifra, indicando que se envíe como `str` o `Decimal`. Para dinero, un
+    `float` inexacto nunca es una entrada válida.
     """
     if isinstance(valor, bool):
         raise TypeError("Un booleano no es un valor numérico válido")

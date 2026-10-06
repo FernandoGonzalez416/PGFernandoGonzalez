@@ -8,6 +8,8 @@ from app.core.dinero import a_cuantia
 
 
 class ProductoCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     codigo: str = Field(min_length=1, max_length=50)
     nombre: str = Field(min_length=1, max_length=150)
     descripcion: str | None = None

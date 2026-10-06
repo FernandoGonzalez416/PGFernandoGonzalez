@@ -795,6 +795,7 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 ### Consideraciones
 
 - `pg_advisory_xact_lock` se libera automáticamente al confirmar o revertir la transacción, incluso ante error: no hay estado que limpiar.
+- **El `pg_advisory_xact_lock` se libera al terminar la transacción completa del request (commit en `get_db_session`), no al cerrar el SAVEPOINT del servicio** — esto es intencional: serializa la generación de folio entre requests concurrentes durante toda la duración del request, no solo durante el cálculo del folio.
 - El folio queda con el formato `F-AAAA-NNNN` (4 dígitos mínimos, `lpad`), que es lo que el `CHECK` exige.
 - Si más adelante se necesita un folio por sucursal o por serie, la clave del bloqueo y la consulta cambiarían; el `CHECK` de formato habría que revisarlo (afecta P15).
 
@@ -850,11 +851,11 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 
 Registradas aquí, **sin corregir silenciosamente** ni el plan ni el código. Las ya resueltas se marcan con **RESUELTO + fecha** (queda el texto original bajo cada una para no perder el origen de la discrepancia):
 
-- **`limite` en la paginación**: §2.4 dice "`limit` obligatorio con piso 50", pero el criterio de aceptación invoca `GET /api/productos?q=shampoo` **sin** `limit`. Implementado como `default=50, ge=1, le=100`; sigue admitiendo `limit=1`.
+- **`limite` en la paginación — RESUELTA el 2026-10-06**: el "piso 50" del plan se interpreta como el **valor por defecto** (ya implementado: `default=50, ge=1, le=100`), no como un mínimo obligatorio. **No se cambió el código.** Texto original de la discrepancia: §2.4 dice "`limit` obligatorio con piso 50", pero el criterio de aceptación invoca `GET /api/productos?q=shampoo` **sin** `limit`. Sigue admitiendo `limit=1`.
 - **`codigo` del producto — RESUELTO el 2026-10-06**: el plan declara `UNIQUE` pero no dice si `codigo` es inmutable. Se resolvió aplicando `model_config = ConfigDict(extra="forbid")` (Pydantic v2.13.5) a los **3 schemas `Update`** — `ProductoUpdate`, `CategoriaUpdate` y `ProveedorUpdate` —, de modo que cualquier campo no declarado (`codigo`, `id`, `created_at`, …) devuelve **422** en vez de descartarse en silencio. Cubierto por `TestCamposNoEditables` en `test_productos.py`, `test_categorias.py` y `test_proveedores.py`. El plan sigue sin definir la inmutabilidad de `codigo` como regla de negocio: ahora el intento es explícito (422), pero queda pendiente si la API debe aceptar y actualizar ese campo en el futuro.
 - **`ExistenciaAjuste`**: el plan la lista en `app/schemas/existencia.py`, pero **ningún endpoint ni servicio de la Fase A la consume** (solo hay lectura de existencias). No se creó para no dejar código muerto; se implementará junto al endpoint de ajuste de stock.
 - **Barra final en las rutas**: los decoradores del ejemplo del plan (`@router.get("/")` con `prefix="/api/productos"`) publicaban `/api/productos/` y obligaban a un **307** desde la URL del criterio de aceptación. Se registraron con `@router.get("")` para que la ruta canónica sea `/api/productos`, tal como documenta la tabla de endpoints del plan.
-- **`a_decimal()`**: acepta un `float` si su valor exacto es representable (`1.5`, `2.0`), aunque su docstring afirma que un `float` nunca es entrada válida. Discrepancia entre código y documentación, pendiente de unificar.
+- **`a_decimal()` docstring vs código — RESUELTA el 2026-10-06**: **el código es correcto**: acepta `float` a propósito solo cuando su valor es exactamente representable (`1.5`, `2.0`), comportamiento verificado por tests (`test_dinero.py`). Se corrigió el **docstring** en `app/core/dinero.py` para describir el comportamiento real en vez de negarlo. Texto original de la discrepancia: acepta un `float` si su valor exacto es representable (`1.5`, `2.0`), aunque su docstring afirmaba que un `float` nunca es entrada válida.
 
 ---
 

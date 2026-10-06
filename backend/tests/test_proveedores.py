@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import httpx2
 import pytest
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import simular_rol
@@ -153,6 +154,8 @@ class TestLeerYActualizar:
             await servicio.actualizar_proveedor(
                 sesion_de_pruebas, uuid4(), ProveedorUpdate(nombre="X")
             )
+
+
 class TestCamposNoEditables:
     """Un campo no declarado en `ProveedorUpdate` se rechaza con 422."""
 
@@ -182,3 +185,41 @@ class TestCamposNoEditables:
         assert (
             await servicio.obtener_proveedor(sesion_de_pruebas, proveedor.id)
         ).nombre == proveedor.nombre
+
+
+class TestCamposNoCreables:
+    """Un campo no declarado en `ProveedorCreate` se rechaza con 422.
+
+    Mismo criterio que `TestCamposNoEditables`, pero sobre el POST de alta:
+    `created_at` es de solo lectura, no un campo de creación.
+    """
+
+    async def test_post_proveedor_con_campo_no_creado_devuelve_422(
+        self, sesion_de_pruebas: AsyncSession
+    ) -> None:
+        simular_rol(sesion_de_pruebas, "propietario")
+        try:
+            async with httpx2.AsyncClient(
+                transport=httpx2.ASGITransport(app=app),
+                base_url="http://pruebas",
+            ) as cliente:
+                respuesta = await cliente.post(
+                    "/api/proveedores",
+                    json={
+                        "nombre": "No debe crearse",
+                        "contacto": "Alguien",
+                        "created_at": "2026-10-05T00:00:00",
+                    },
+                )
+        finally:
+            app.dependency_overrides.clear()
+
+        assert respuesta.status_code == 422
+        errores = respuesta.json()["detail"]
+        assert any("created_at" in str(detalle["loc"]) for detalle in errores)
+        total = (
+            await sesion_de_pruebas.execute(
+                text("SELECT count(*) FROM proveedor WHERE nombre = 'No debe crearse'")
+            )
+        ).scalar_one()
+        assert total == 0

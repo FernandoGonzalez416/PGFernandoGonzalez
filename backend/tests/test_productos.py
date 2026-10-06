@@ -703,6 +703,8 @@ class TestPermisosDelPadre:
             )
         ).scalar_one()
         assert total == 0
+
+
 class TestCamposNoEditables:
     """Un campo no declarado en `ProductoUpdate` debe rechazarse con 422.
 
@@ -742,3 +744,49 @@ class TestCamposNoEditables:
         assert (
             await servicio.obtener_producto(sesion_de_pruebas, producto.id)
         ).nombre == "Producto con codigo fijo"
+
+
+class TestCamposNoCreables:
+    """Un campo no declarado en `ProductoCreate` se rechaza con 422.
+
+    Mismo criterio que `TestCamposNoEditables`, pero sobre el POST de alta:
+    `existencia` pertenece a `ProductoRead` (se calcula a partir del almacén),
+    no a la creación, así que un cliente que la envíe recibe un error explícito
+    en vez de un 201 engañoso.
+    """
+
+    async def test_post_producto_con_campo_no_creado_devuelve_422(
+        self,
+        sesion_de_pruebas: AsyncSession,
+        almacen_de_pruebas: str,
+    ) -> None:
+        categoria_id = await _crear_categoria(sesion_de_pruebas)
+        simular_rol(sesion_de_pruebas, "propietario")
+        try:
+            async with httpx2.AsyncClient(
+                transport=httpx2.ASGITransport(app=app),
+                base_url="http://pruebas",
+            ) as cliente:
+                respuesta = await cliente.post(
+                    "/api/productos",
+                    json={
+                        "codigo": "P-EXTRA",
+                        "nombre": "No debe crearse",
+                        "categoria_id": str(categoria_id),
+                        "precio_venta": "10.00",
+                        "precio_costo": "5.00",
+                        "existencia": "99.00",
+                    },
+                )
+        finally:
+            app.dependency_overrides.clear()
+
+        assert respuesta.status_code == 422
+        errores = respuesta.json()["detail"]
+        assert any("existencia" in str(detalle["loc"]) for detalle in errores)
+        total = (
+            await sesion_de_pruebas.execute(
+                text("SELECT count(*) FROM producto WHERE codigo = 'P-EXTRA'")
+            )
+        ).scalar_one()
+        assert total == 0

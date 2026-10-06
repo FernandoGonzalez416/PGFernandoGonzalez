@@ -56,6 +56,20 @@ Deben existir pruebas para, al menos:
 - Usar siempre **datos ficticios marcados explícitamente como prueba** (coherente con P4 de `DECISIONES.md`): deben etiquetarse como simulación y jamás presentarse como datos reales del negocio.
 - No inventar datos de entrenamiento ni resultados: cualquier test con datos simulados debe etiquetarse como tal.
 
+## Regla: correr ambas suites antes de cerrar una fase
+
+`pytest` (por defecto) excluye las pruebas de integración
+(`addopts = -m "not integracion"`) para iterar rápido. Antes de
+cualquier commit que cierre una fase completa (no cada commit chico),
+correr OBLIGATORIAMENTE ambas suites:
+
+```bash
+pytest
+pytest -m integracion
+```
+
+Un commit de cierre de fase nunca se hace con solo la primera.
+
 ## Reglas
 
 - **No crear pruebas falsas** ni tests que siempre pasan sin verificar comportamiento real.

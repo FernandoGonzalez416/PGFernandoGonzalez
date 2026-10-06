@@ -8,6 +8,8 @@ from app.core.dinero import a_cuantia
 
 
 class ProveedorCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     nombre: str = Field(min_length=1, max_length=150)
     contacto: str | None = None
     telefono: str | None = None

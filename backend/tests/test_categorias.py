@@ -2,6 +2,7 @@ from uuid import uuid4
 
 import httpx2
 import pytest
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import simular_rol
@@ -155,6 +156,8 @@ class TestActualizar:
             await servicio.actualizar_categoria(
                 sesion_de_pruebas, uuid4(), CategoriaUpdate(nombre="X")
             )
+
+
 class TestCamposNoEditables:
     """Un campo no declarado en `CategoriaUpdate` se rechaza con 422.
 
@@ -188,3 +191,37 @@ class TestCamposNoEditables:
         assert (
             await servicio.obtener_categoria(sesion_de_pruebas, categoria.id)
         ).nombre == categoria.nombre
+
+
+class TestCamposNoCreables:
+    """Un campo no declarado en `CategoriaCreate` se rechaza con 422.
+
+    Mismo criterio que `TestCamposNoEditables`, pero sobre el POST de alta:
+    `activo` lo gestiona el servicio, no se fija al crear.
+    """
+
+    async def test_post_categoria_con_campo_no_creado_devuelve_422(
+        self, sesion_de_pruebas: AsyncSession
+    ) -> None:
+        simular_rol(sesion_de_pruebas, "propietario")
+        try:
+            async with httpx2.AsyncClient(
+                transport=httpx2.ASGITransport(app=app),
+                base_url="http://pruebas",
+            ) as cliente:
+                respuesta = await cliente.post(
+                    "/api/categorias",
+                    json={"nombre": "No debe crearse", "activo": False},
+                )
+        finally:
+            app.dependency_overrides.clear()
+
+        assert respuesta.status_code == 422
+        errores = respuesta.json()["detail"]
+        assert any("activo" in str(detalle["loc"]) for detalle in errores)
+        total = (
+            await sesion_de_pruebas.execute(
+                text("SELECT count(*) FROM categoria WHERE nombre = 'No debe crearse'")
+            )
+        ).scalar_one()
+        assert total == 0
