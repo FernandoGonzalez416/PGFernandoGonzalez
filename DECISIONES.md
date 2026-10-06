@@ -6,6 +6,8 @@ Estado de las entradas: `APROBADO` (confirmado explícitamente), `PENDIENTE DE A
 
 Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **P3/P3a/P13, P14, P15 y P16**). Mismo día, **P17 fue CONFIGURADO**: servidor Supabase MCP añadido a `opencode.json` (`read_only=true`, `features=database,docs,development`) y **autenticado** vía OAuth. Pendiente: aportar el **Project Ref** para limitar el alcance a un solo proyecto y reiniciar OpenCode para que la sesión cargue las herramientas MCP. Mismo día, **P18 fue APROBADO**: `httpx2` como cliente HTTP de testing del backend (ver sección P18).
 
+Actualización: 2026-09-26 — **P7 reaprobada (identidad visual)**. Se **descartan** la paleta morado/blanco con acentos dorados y la marca de prueba "Belleza Clara". Identidad oficial: **Familia de la Cruz**, paleta crema/nude/terracota/café/gloss y tipografías **Playfair Display** (títulos) + **Montserrat** (cuerpo). El stack tecnológico no cambia. Ver sección P7, incluida la discrepancia con la tesis §5.2.
+
 ### Tabla de estado general
 
 | # | Tema | Estado |
@@ -16,7 +18,7 @@ Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **
 | P4 | Datos de predicción y desarrollo | APROBADO |
 | P5 | Usuarios y roles | APROBADO; permisos APROBADOS (P14) |
 | P6 | Modelo de datos | APROBADO (13 entidades; esquema P15 APROBADO) |
-| P7 | Diseño web | APROBADO |
+| P7 | Diseño web | APROBADO; identidad visual **REAPROBADA el 2026-09-26** (nude/terracota/café en lugar de morado/dorado; marca "Familia de la Cruz") |
 | P8 | Comprobante de venta | APROBADO (detalle del recibo se define al implementar) |
 | P9 | Supabase | APROBADO; conexión MCP CONFIGURADA y AUTENTICADA (P17); falta scoping por Project Ref |
 | P10 | Git | APROBADO (commit/push pendientes de orden explícita) |
@@ -28,6 +30,7 @@ Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **
 | P16 | Versiones detalladas | APROBADO (2026-09-21; no instalar aún) |
 | P17 | Supabase MCP | CONFIGURADO y AUTENTICADO (2026-09-21): solo lectura en `opencode.json`; **Project Ref aportado y aplicado** (2026-09-21); pendiente reiniciar OpenCode |
 | P18 | Cliente HTTP para tests del backend | APROBADO (2026-09-21): `httpx2` (fork "next generation" de Pydantic) en vez de `httpx` |
+| P19 | Patrón de acceso frontend↔Supabase | APROBADO |
 
 > Regla: **no se cambia una decisión a APROBADO por haberla propuesto**. Solo el usuario lo aprueba.
 
@@ -151,14 +154,67 @@ Criterio revisado y detallado en la sección **"P13. Criterio de suficiencia de 
 - El diseño detallado de atributos, tipos, claves y relaciones debe realizarse **antes de crear las tablas**.
 - El modelo debe ser coherente con los requerimientos funcionales reales; **no crear entidades innecesarias** solo porque podrían ser útiles en el futuro.
 
-### P7. Diseño de la aplicación Web — DECIDIDO
+### P7. Diseño de la aplicación Web — DECIDIDO (identidad visual REAPROBADA el 2026-09-26)
+
+> **Reaprobación 2026-09-26 (sustituye la identidad anterior).** El usuario **descartó oficialmente** la identidad previa (morado/blanco con acentos dorados) y la marca de prueba **"Belleza Clara"**. La identidad vigente es la propuesta de cosmética moderna aprobada abajo, con la marca real **Familia de la Cruz**. **No se reintroducen el morado ni el dorado.**
+
+#### Alcance de la interfaz (sin cambios)
 - La aplicación actual será principalmente una **aplicación web de escritorio**, pero **responsive** y accesible desde teléfonos mediante navegador (no es una app móvil).
 - Prioridad de experiencia:
   1. Computadora / escritorio.
   2. Teléfono mediante navegador como vista secundaria/responsive.
 - Debe funcionar correctamente en ambas situaciones.
-- Se conserva la identidad visual de la tesis (paleta morado/blanco, acentos dorados suaves, estados de alerta, estructura relacionada con inventario y ventas).
 - **NO copiar literalmente** la navegación móvil de la tesis; la interfaz usa una estructura apropiada para aplicación web.
+- **El cambio es solo de identidad visual**: variables de estilo, clases, tipografías y nombre de la tienda. **No se modifica el stack tecnológico** (React + Vite + TypeScript, FastAPI, Supabase, Motion); la lógica de las vistas (selector de tonos, carrito, modales) se adapta con las tecnologías ya definidas en el repositorio.
+
+#### Nombre oficial del establecimiento
+- **"Familia de la Cruz"** es el nombre real de la marca y debe mantenerse **en todo momento**: interfaz, comprobante de venta, reportes y documentación.
+- **Prohibido** usar marcas genéricas o de prueba ("Belleza Clara", "Cosméticos De la Cruz", "Gloss & Nude" o cualquier otra) en cualquier vista o artefacto del proyecto.
+
+#### Paleta de colores oficial
+
+| Rol | Token | Hex | Uso |
+|---|---|---|---|
+| Blanco crema | `crema` | `#FAF6F0` | Fondo principal y áreas de lectura limpia |
+| Rosa nude suave | `nude` | `#E0C9BB` | Fondos secundarios, tarjetas de productos y secciones destacadas |
+| Terracota | `terracota` | `#C87D71` | Acento primario: botones de acción (CTA), precios y etiquetas destacadas, bordes y estados activos |
+| Café oscuro profundo | `cafe` | `#2D2424` | Tipografía principal, títulos, iconos y encabezados (reemplaza al negro puro) |
+| Gloss soft | `gloss` | `#D8B4A0` | Estados *hover*, bordes activos e interacciones secundarias |
+
+Reglas de aplicación (confirmadas por el usuario):
+- **Contraste**: el terracota se usa como **relleno, borde o estado activo**, nunca como color de texto sobre crema (2.9:1, no cumple AA). Sobre relleno terracota el texto es **café `#2D2424`** (4.8:1, cumple AA).
+- **Precios y etiquetas**: se destacan con terracota como fondo, borde o subrayado, manteniendo el texto en café.
+- **Hover**: se resuelve con `gloss` o con un tinte de `gloss`; no se incorporan colores nuevos.
+- **Estados de alerta**: se **conservan** los colores semánticos (ámbar = bajo stock, rojo = vencimiento/agotado, verde = disponible) porque transmiten información, no marca. La paleta nude/terracota es la identidad; los colores semánticos no la reemplazan.
+- **Sombras**: siempre teñidas (`rgba` de café o terracota), nunca negro puro.
+- Contraste mínimo **WCAG AA** en todo el texto (≥ 4.5:1) y en bordes y elementos gráficos con significado (≥ 3:1).
+
+#### Tipografía oficial
+
+| Uso | Familia | Pesos |
+|---|---|---|
+| Títulos y encabezados (H1, H2, H3, nombres de líneas, nombre del establecimiento) | **Playfair Display** (serif) | 500 / 600 / 700 |
+| Cuerpo de texto, precios, filtros, navegación, botones y etiquetas | **Montserrat** (sans-serif) | 400 / 500 / 600 / 700 / 800 |
+
+- Números y montos: `font-variant-numeric: tabular-nums`.
+- Ambas familias son de uso libre; en el prototipo se cargan desde Google Fonts y en producción se servirían como archivos locales (self-hosted).
+
+#### Discrepancia con la tesis (señalada, NO se corrige en el documento)
+> **Corrección 2026-09-26.** Una nota anterior de P7 afirmaba que §5.2 no tenía sub-puntos numerados. Es **incorrecto**: el documento contiene §5.2.1 a §5.2.10 numerados. La referencia se corrige abajo.
+
+La tesis §5.2 "Maquetización" **sí** existe y está numerada (§5.2.1–§5.2.10). Se adoptó su **estructura** (encabezado + menú lateral con cuatro accesos, contenido central, formularios guiados, colores semánticos de estado) y se resolvió así cada conflicto con la identidad aprobada:
+
+| §tesis | Qué pide | Conflicto | Resolución en esta fase |
+|---|---|---|---|
+| §5.2.2 | Logotipo **genérico**, no vinculado a un negocio | Contradice la marca real obligatoria | Se usa el logotipo de **"Familia de la Cruz"**; la estructura (logotipo en el encabezado) sí se respeta |
+| §5.2.4 | Paleta **morado / blanco / dorado**, acento dorado en botones y alertas positivas | Contradice la paleta oficial | Se usa crema / nude / terracota / café / gloss; el **terracota** es el acento de los botones de acción. "Alertas positivas" en **verde** (`--ok`), no en dorado |
+| §5.2.5 | Tipografía **sans-serif** genérica, en su mayoría semibold | Contradice la tipografía oficial | **Playfair Display** en títulos y **Montserrat** en cuerpo |
+| §5.2.3 | Cuatro accesos: Panel general, Productos, Ventas, Alertas | — | **Se aplica tal cual** |
+| §5.2.6 – §5.2.10 | Login, panel, productos, ventas y alertas con la estructura descrita | — | **Se aplican tal cual** |
+
+- **No se modifica el documento académico** para que coincida con el código (regla del proyecto). Las diferencias quedan registradas aquí y deben explicarse en la defensa del proyecto como decisiones de diseño posteriores, tomadas con el usuario.
+- Nota sobre §5.2.7: la tesis pide que la **predicción de demanda** sea una vista exclusiva del administrador. Por eso **no es uno de los cuatro accesos del menú lateral** (que §5.2.3 fija en cuatro); se abre desde el Panel general mediante una tarjeta que indica que es una vista de administración.
+- Nota sobre §5.2.8: la tesis enumera seis campos para registrar un producto (nombre, categoría, cantidad, proveedor, fecha de ingreso y precio). Los seis se respetan y se muestran en ese orden, en formulario vertical. Se **agregan dos campos opcionales** —**cantidad mínima** y **fecha de vencimiento**— porque las reglas de alerta del proyecto (`umbralMinimo`, `diasVencimientoAviso`) no pueden calcularse sin ellos y ambos existen en el modelo de datos aprobado (P15). Quedan marcados como "Opcional" en la interfaz para no atribuir a la tesis un requisito que no enuncia.
 
 ### P8. Comprobante de venta — DECIDIDO
 - El comprobante es un **recibo interno**, no una factura tributaria.
@@ -651,11 +707,133 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 
 ---
 
+## P19. Almacén por defecto para el inventario (APROBADO — 2026-10-05)
+
+> **Aprobado directamente por Fernando el 2026-10-05**, junto con P20 y P21, para desbloquear la Fase 0 del backend.
+
+### Contexto
+
+- El proyecto Supabase (`spozipecnvhmchxvmsqt`) tiene la tabla `almacen` con **0 filas**.
+- `existencia.almacen_id` es **NOT NULL** con FK a `almacen` (esquema P15), y `existencia.cantidad` está en `CHECK (cantidad >= 0)`.
+- Sin al menos un almacén no se puede registrar ni una existencia ni una venta: **la venta del requerimiento 4 es imposible en el estado actual**.
+- El piloto es un negocio familiar con un único punto de stock.
+
+### Decisión
+
+- **Un único almacén "Principal"**, sembrado de forma idempotente por `backend/scripts/semilla.py`.
+- El backend lo resuelve con la variable de configuración `ALMACEN_PREDETERMINADO` (en `backend/app/core/config.py`), de modo que **ningún endpoint exige que el cliente mande `almacen_id`**.
+- **Multi-almacén queda fuera de esta fase**: no se expone `almacen_id` en la venta ni en los ajustes.
+
+### Consideraciones
+
+- No se cierra la puerta a multi-almacén: la columna y la unicidad `UNIQUE (producto_id, almacen_id)` ya lo permiten. Si más adelante se requiere, se añade `almacen_id` al request y un selector en la UI.
+- La Fase 0 siembra umbrales `umbral_minimo > 0` en el catálogo ficticio, porque con `umbral_minimo = 0` **todo** producto aparecería como bajo stock.
+
+---
+
+## P20. Base de datos para las pruebas de integración (APROBADO — 2026-10-05)
+
+### Contexto
+
+- `backend/tests/` corre **42 pruebas con dobles (mocks)**, sin base de datos.
+- Los dobles **no pueden verificar** la atomicidad de la venta, los `CHECK` de folios y totales, ni los `UNIQUE` (`folio`, `detalle_venta (venta_id, producto_id)`, `producto.codigo`), que son precisamente el núcleo del requerimiento 4.
+- `pytest-mock` no está instalado: se usa `unittest.mock` de la stdlib.
+
+### Decisión
+
+- **Esquema `test` dentro del mismo proyecto Supabase**, con el mismo DDL que las migraciones de `supabase/migrations/`.
+- Cada prueba de integración se ejecuta **dentro de una transacción que se revierte al final** (rollback), de modo que el esquema `test` no acumula datos.
+- Las pruebas unitarias (capacidades, dinero, errores) **siguen sin base de datos**.
+- Las pruebas de integración se marcan con `pytest.mark.integracion` y exigen `DATABASE_URL_TEST`; sin esa variable se **omiten** (`skip`), nunca se apuntan por error a la base de desarrollo.
+
+### Consideraciones
+
+- No requiere Docker ni un Postgres local, y usa el mismo proyecto ya configurado (P9/P17).
+- Al conectar como propietario, **RLS no aplica** en el esquema `test`: la autorización se sigue probando en la capa de FastAPI (`requiere()`).
+- Si el proyecto Supabase se usara para producción, convendría mover el esquema `test` a una base separada; hoy el piloto es un único entorno.
+
+---
+
+## P21. Redondeo y precisión del dinero (APROBADO — 2026-10-05)
+
+### Contexto
+
+- Los montos son `numeric` **sin escala fija** en PostgreSQL.
+- Hay restricciones que exigen cuadrar **exacto**: `venta.total = subtotal - descuento`, `0 <= descuento <= subtotal`, `detalle_venta.subtotal = cantidad * precio_unitario`.
+- Sin una regla explícita, el redondeo por línea puede hacer que el total no cuadre y la venta sea rechazada por el `CHECK`.
+
+### Decisión
+
+- **2 decimales con `ROUND_HALF_UP`**, implementados en `backend/app/core/dinero.py` (helper único, sin lógica duplicada).
+- **Los precios se cuantizan al guardar** (`precio_venta`, `precio_costo`) en Pydantic y en el servicio.
+- Con `cantidad` entera y precio ya cuantizado a 2 decimales, el **subtotal de línea es exacto** (`cantidad * precio_unitario`), lo que satisface el `CHECK` sin redondear la línea.
+- El **redondeo ocurre una sola vez**, al cuantizar los totales de la venta (`subtotal`, `descuento`, `total`), nunca por línea.
+
+### Consideraciones
+
+- Si algún día una cantidad admitiera fracciones, la regla debe revisarse: el `CHECK` de `detalle_venta` seguiría exigiendo aritmética exacta.
+- `Decimal` en Python y `numeric` en PostgreSQL se complementan sin pérdida, siempre que no se convierta a `float` en el camino.
+
+---
+
+## P22. Generación concurrente del folio de venta (APROBADO — 2026-10-05)
+
+> **Aprobado directamente por Fernando el 2026-10-05**. Resuelve la decisión bloqueante **B3** del plan `backend/docs/PLAN_FASE3_4.md`.
+
+### Contexto
+
+- `venta.folio` tiene `CONSTRAINT chk_venta_folio_formato CHECK (folio ~ '^F-\d{4}-\d{4,}$')` y `CONSTRAINT uq_venta_folio UNIQUE (folio)`.
+- No existe tabla de contador de folios, y el esquema P15 está **aprobado**: agregar una tabla sería una decisión de esquema.
+- Sin serialización, dos ventas simultáneas pueden leer el mismo `MAX(folio)` y colisionar en el `UNIQUE`.
+
+### Decisión
+
+- **`pg_advisory_xact_lock` + `MAX(folio)` del año actual**, calculados **dentro de la misma transacción de la venta y antes del `INSERT`**.
+- El bloqueo se toma sobre una clave fija del año en curso; el `UNIQUE` permanece como red de seguridad.
+- **No requiere cambios al esquema P15**: el `CHECK` de formato y el `UNIQUE` de folio ya existen.
+
+### Consideraciones
+
+- `pg_advisory_xact_lock` se libera automáticamente al confirmar o revertir la transacción, incluso ante error: no hay estado que limpiar.
+- El folio queda con el formato `F-AAAA-NNNN` (4 dígitos mínimos, `lpad`), que es lo que el `CHECK` exige.
+- Si más adelante se necesita un folio por sucursal o por serie, la clave del bloqueo y la consulta cambiarían; el `CHECK` de formato habría que revisarlo (afecta P15).
+
+---
+
+## P23. Acceso de FastAPI y RLS: el propietario tampoco pasa por RLS (APROBADO — 2026-10-05)
+
+> **Resuelve la decisión bloqueante B7** del plan `backend/docs/PLAN_FASE3_4.md`. La corrección es **documental**: no cambió ninguna política ni una línea de código de la aplicación.
+
+### Contexto
+
+- El comentario de `supabase/migrations/14_enable_rls.sql` afirmaba que "`service_role` (usado por FastAPI) NO se ve afectado por RLS bajo ninguna circunstancia".
+- Esa frase era **incorrecta para este proyecto**: FastAPI **no** consume `service_role` ni pasa por PostgREST. Abre conexión directa a PostgreSQL con el rol `postgres` (`app/core/db.py`, `DATABASE_URL`).
+- El frontend tampoco habla con Supabase directamente: toda la aplicación web consume la API.
+
+### Decisión
+
+- FastAPI conecta como **propietario (owner) de las tablas**, y PostgreSQL **no aplica RLS al owner** salvo que se use `FORCE ROW LEVEL SECURITY`, que el proyecto no usa.
+  Por lo tanto **FastAPI tampoco pasa por RLS**: el propietario los ignora.
+- El texto corregido dice exactamente eso y aclara que `service_role` vía PostgREST **no se usa** en este proyecto.
+- **Consecuencia de seguridad**: la autorización **no** descansa en RLS, sino en `requiere()` y las capacidades por rol (P14) aplicadas en cada endpoint. RLS queda como red de seguridad para el resto de superficies.
+
+### Consideraciones
+
+- **RLS se mantiene habilitada** en las tablas de `public`: sigue siendo útil frente al acceso del cliente con la `anon` key y frente a Realtime, que sí pasan por RLS.
+- Si en el futuro FastAPI conectara con un rol **no propietario**, las políticas de `14_enable_rls.sql` **sí** se aplicarían y habría que revisar el rendimiento de las consultas.
+- El esquema `test` de las pruebas de integración (P20) tampoco habilita RLS, por la misma razón: las pruebas conectan como propietario y la autorización se verifica en la capa de FastAPI.
+
+---
+
 ## Decisiones aún pendientes (requieren confirmación)
 
 **Resueltas el 2026-09-21 (APROBADAS)**: R1 (P3/P3a, selección de modelo + plan de 18 puntos), R2/R9 (P14, matriz de 18 capacidades con la modificación de anulación propia del padre), R3/R10 (P15, esquema inicial + 10 respuestas), R6/R11 (P16, versiones/pin-range), R8 (P13, suficiencia + confianza por evidencia).
 
+**Resueltas el 2026-10-05 (APROBADAS)**: P19 (almacén por defecto), P20 (esquema `test` para pruebas de integración), P21 (redondeo del dinero), P22 (folio concurrente), P23 (acceso de FastAPI y RLS). Las cuatro primeras corresponden a las decisiones bloqueantes B1–B4 del plan `backend/docs/PLAN_FASE3_4.md`; P23 corresponde a B7.
+
 Siguen pendientes:
+- **B5. Comprobante en PDF** (P8): HTML con estilos de impresión, o agregar `reportlab`.
+- **B6. Sugerencia sin motor de IA**: la fila base de predicción (`promedio_movil`, confianza `baja`) o dejar `Sugerencia` sin CRUD hasta autorizar el motor.
 - **R4. Estrategia offline definitiva** y su tecnología (P2): se documentará cuando llegue el momento; no bloquea la primera versión.
 - **R5. Detalles de despliegue/hosting** (P12): cuando la aplicación esté avanzada.
 - **R7/R12. Supabase MCP (P17)**: CONFIGURADO y AUTENTICADO (2026-09-21). **Project Ref `spozipecnvhmchxvmsqt` aportado y aplicado** (2026-09-21). Pendiente únicamente: **reiniciar OpenCode** (manual, hecho por el usuario) para cargar las herramientas MCP scoped al proyecto en la sesión. No crear ni modificar objetos en Supabase sin informar antes.
