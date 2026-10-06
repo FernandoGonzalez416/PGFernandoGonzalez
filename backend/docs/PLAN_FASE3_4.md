@@ -173,7 +173,7 @@ Esperado: la primera imprime el almacén creado y `SIMULACION: datos ficticios`;
 cd backend
 .\.venv\Scripts\python.exe -c "import app.main; print(sorted(app.main.app.openapi()['paths']))"
 ```
-Esperado: `['/api/me', '/docs', '/docs/oauth2-redirect', '/health', '/openapi.json', '/redoc']` — confirmar que `/api/me` **no** se volvió `/api/api/me`.
+Esperado: `['/', '/api/me', '/health']` — confirmar que `/api/me` **no** se volvió `/api/api/me`. (Nota: `openapi()['paths']` solo contiene rutas de la API; `/docs`, `/redoc` y `/openapi.json` no aparecen ahí, y `/` sí porque existe.)
 
 ---
 

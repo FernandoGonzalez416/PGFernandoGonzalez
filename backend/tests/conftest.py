@@ -15,12 +15,15 @@ estas fixtures y corren sin base de datos.
 import os
 from collections.abc import AsyncIterator
 from pathlib import Path
+from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from app.core import config
 
 # pytest no carga el .env por su cuenta; lo hacemos aquí para que
 # DATABASE_URL_TEST pueda definirse en backend/.env (ignorado por git).
@@ -92,3 +95,50 @@ async def sesion_de_pruebas(url_de_pruebas: str) -> AsyncIterator[AsyncSession]:
                 await transaccion.rollback()
     finally:
         await motor.dispose()
+
+
+@pytest_asyncio.fixture
+async def almacen_de_pruebas(sesion_de_pruebas: AsyncSession) -> str:
+    """Almacén por defecto dentro de la transacción de la prueba.
+
+    `existencia.almacen_id` es NOT NULL, así que cualquier prueba que escriba
+    existencias necesita uno. La fila se inserta en la misma transacción que se
+    revierte al terminar, por lo que no deja rastro.
+    """
+    nombre = config.ALMACEN_PREDETERMINADO
+    await sesion_de_pruebas.execute(
+        text("INSERT INTO almacen (nombre) VALUES (:nombre) ON CONFLICT DO NOTHING"),
+        {"nombre": nombre},
+    )
+    return nombre
+
+
+@pytest_asyncio.fixture
+async def usuario_de_pruebas(sesion_de_pruebas: AsyncSession) -> UUID:
+    """Usuario propietario válido dentro de la transacción de la prueba.
+
+    `usuario.auth_id` referencia `auth.users`, así que hay que insertar primero
+    la fila en `auth.users` (mismo aviso que hace el propio
+    `tests/sql/00_test_schema.sql`). `auth.users` solo exige `id` NOT NULL sin
+    valor por defecto; el resto de columnas son aceptables o tienen default.
+
+    Al vivir dentro de la transacción que el fixture revierte, ni `auth.users`
+    ni `usuario` conservan la fila al terminar la prueba.
+    """
+    auth_id = uuid4()
+    await sesion_de_pruebas.execute(
+        text("INSERT INTO auth.users (id) VALUES (:auth_id)"), {"auth_id": auth_id}
+    )
+    usuario_id = (
+        await sesion_de_pruebas.execute(
+            text(
+                """
+                INSERT INTO usuario (auth_id, nombre, email, rol)
+                VALUES (:auth_id, 'Usuario de prueba', 'prueba@test.invalid', 'propietario')
+                RETURNING id
+                """
+            ),
+            {"auth_id": auth_id},
+        )
+    ).scalar_one()
+    return usuario_id

@@ -5,7 +5,7 @@ from app.core.security import UsuarioAutenticado, get_current_usuario
 router = APIRouter()
 
 
-@router.get("/api/me")
+@router.get("/me")
 async def leer_usuario_actual(
     usuario: UsuarioAutenticado = Depends(get_current_usuario),
 ) -> UsuarioAutenticado:

@@ -825,11 +825,44 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 
 ---
 
+## P24. Límite transaccional: SAVEPOINT en el servicio y `commit` en el request (APROBADO — 2026-10-05)
+
+### Contexto
+
+- El plan `backend/docs/PLAN_FASE3_4.md` exige atomicidad en el alta de producto: producto + existencia + movimiento inicial, o nada.
+- Había dos lecturas posibles: `commit`/`rollback` dentro de cada servicio, o una transacción abierta durante todo el request.
+- La segunda era **incorrecta** en este proyecto: `get_db_session` es una dependencia de FastAPI compartida por todos los endpoints, y un `commit` por endpoint es frágil de mantener.
+
+### Decisión (elegida por el usuario)
+
+- **Los servicios usan SAVEPOINT** (`session.begin_nested()`), no transacción completa. Así una operación atómica de negocio se revierte sola sin tocar el resto de la transacción abierta.
+- **`get_db_session` es la unidad de trabajo**: hace `commit()` al salir del request y `rollback()` si el handler lanza una excepción. Es el único lugar que decide confirmar.
+- Beneficio directo: los tests de integración pueden **envolver cada prueba en una transacción y hacer `rollback` al final**, conservando el `commit` del código de producción sin ensuciar la base.
+
+### Consideraciones
+
+- Un fallo dentro de un SAVEPOINT no invalida la transacción exterior, pero **deja los locks tomados hasta el commit/rollback final**: por eso los servicios no capturan errores de BD sin loguear ni re-lanzar.
+- Cualquier servicio que se cierre a sí mismo con `commit()` violaría esta decisión y rompería las pruebas por rollback.
+
+---
+
+## Desviaciones detectadas entre el plan y la implementación (Fase A)
+
+Registradas aquí, **sin corregir silenciosamente** ni el plan ni el código:
+
+- **`limite` en la paginación**: §2.4 dice "`limit` obligatorio con piso 50", pero el criterio de aceptación invoca `GET /api/productos?q=shampoo` **sin** `limit`. Implementado como `default=50, ge=1, le=100`; sigue admitiendo `limit=1`.
+- **`codigo` del producto**: el plan declara `UNIQUE` pero no dice si es inmutable. `ProductoUpdate` no lo expone, así que un `PATCH` con `codigo` lo **ignora en silencio** (Pydantic descarta campos extra). Queda pendiente decidir entre rechazarlo como 422 o hacerlo inmutable explícito.
+- **`ExistenciaAjuste`**: el plan la lista en `app/schemas/existencia.py`, pero **ningún endpoint ni servicio de la Fase A la consume** (solo hay lectura de existencias). No se creó para no dejar código muerto; se implementará junto al endpoint de ajuste de stock.
+- **Barra final en las rutas**: los decoradores del ejemplo del plan (`@router.get("/")` con `prefix="/api/productos"`) publicaban `/api/productos/` y obligaban a un **307** desde la URL del criterio de aceptación. Se registraron con `@router.get("")` para que la ruta canónica sea `/api/productos`, tal como documenta la tabla de endpoints del plan.
+- **`a_decimal()`**: acepta un `float` si su valor exacto es representable (`1.5`, `2.0`), aunque su docstring afirma que un `float` nunca es entrada válida. Discrepancia entre código y documentación, pendiente de unificar.
+
+---
+
 ## Decisiones aún pendientes (requieren confirmación)
 
 **Resueltas el 2026-09-21 (APROBADAS)**: R1 (P3/P3a, selección de modelo + plan de 18 puntos), R2/R9 (P14, matriz de 18 capacidades con la modificación de anulación propia del padre), R3/R10 (P15, esquema inicial + 10 respuestas), R6/R11 (P16, versiones/pin-range), R8 (P13, suficiencia + confianza por evidencia).
 
-**Resueltas el 2026-10-05 (APROBADAS)**: P19 (almacén por defecto), P20 (esquema `test` para pruebas de integración), P21 (redondeo del dinero), P22 (folio concurrente), P23 (acceso de FastAPI y RLS). Las cuatro primeras corresponden a las decisiones bloqueantes B1–B4 del plan `backend/docs/PLAN_FASE3_4.md`; P23 corresponde a B7.
+**Resueltas el 2026-10-05 (APROBADAS)**: P19 (almacén por defecto), P20 (esquema `test` para pruebas de integración), P21 (redondeo del dinero), P22 (folio concurrente), P23 (acceso de FastAPI y RLS), P24 (límite transaccional: SAVEPOINT + `commit` en el request). Las cuatro primeras corresponden a las decisiones bloqueantes B1–B4 del plan `backend/docs/PLAN_FASE3_4.md` y P23 a B7; **P24 no corresponde a B1–B7**: surgir de una pregunta de arquitectura sobre el límite transaccional, que el plan no cubría.
 
 Siguen pendientes:
 - **B5. Comprobante en PDF** (P8): HTML con estilos de impresión, o agregar `reportlab`.
