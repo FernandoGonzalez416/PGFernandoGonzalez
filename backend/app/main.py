@@ -6,14 +6,19 @@ from app.api.inventario import router as inventario_router
 from app.api.me import router as me_router
 from app.api.productos import router as productos_router
 from app.api.proveedores import router as proveedores_router
+from app.api.ventas import router as ventas_router
 from app.core import config
 from app.core.errores import (
+    AnulacionNoPermitidaError,
+    ClienteInvalidoError,
     ConflictoDeUnicidadError,
+    DescuentoInvalidoError,
     EntidadNoEncontradaError,
     ErrorDeDominio,
     ProductoConExistenciasError,
     StockInsuficienteError,
     VencimientoInvalidoError,
+    VentaNoAnulableError,
 )
 
 CODIGO_POR_ERROR: dict[type[ErrorDeDominio], int] = {
@@ -22,6 +27,10 @@ CODIGO_POR_ERROR: dict[type[ErrorDeDominio], int] = {
     ProductoConExistenciasError: 409,
     StockInsuficienteError: 409,
     VencimientoInvalidoError: 422,
+    ClienteInvalidoError: 422,
+    DescuentoInvalidoError: 422,
+    AnulacionNoPermitidaError: 403,
+    VentaNoAnulableError: 409,
 }
 
 app = FastAPI(
@@ -55,6 +64,7 @@ app.include_router(productos_router, prefix="/api/productos", tags=["productos"]
 app.include_router(categorias_router, prefix="/api/categorias", tags=["categorias"])
 app.include_router(proveedores_router, prefix="/api/proveedores", tags=["proveedores"])
 app.include_router(inventario_router, prefix="/api/inventario", tags=["inventario"])
+app.include_router(ventas_router, prefix="/api/ventas", tags=["ventas"])
 
 
 @app.get("/")

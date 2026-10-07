@@ -70,6 +70,27 @@ class StockInsuficienteError(ErrorDeDominio):
     """
 
 
+class VentaNoEncontradaError(EntidadNoEncontradaError):
+    def __init__(self, venta_id: str) -> None:
+        super().__init__(f"No existe una venta con id '{venta_id}'")
+
+
+class ClienteInvalidoError(ErrorDeDominio):
+    """El cliente enviado no existe o está inactivo (422)."""
+
+
+class DescuentoInvalidoError(ErrorDeDominio):
+    """El descuento no está dentro de [0, subtotal] (422)."""
+
+
+class AnulacionNoPermitidaError(ErrorDeDominio):
+    """El rol no está autorizado a anular esta venta (P14) (403)."""
+
+
+class VentaNoAnulableError(ErrorDeDominio):
+    """La venta ya está anulada: no admite una segunda anulación (409)."""
+
+
 def _menciona_restriccion(error: IntegrityError, nombre: str) -> bool:
     """¿La violación de integridad corresponde a la restricción `nombre`?
 
