@@ -1,4 +1,4 @@
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.api.categorias import router as categorias_router
@@ -7,6 +7,8 @@ from app.api.me import router as me_router
 from app.api.productos import router as productos_router
 from app.api.proveedores import router as proveedores_router
 from app.api.ventas import router as ventas_router
+from app.api.alertas import router as alertas_router
+from app.api.reportes import router as reportes_router
 from app.core import config
 from app.core.errores import (
     AnulacionNoPermitidaError,
@@ -20,7 +22,6 @@ from app.core.errores import (
     VencimientoInvalidoError,
     VentaNoAnulableError,
 )
-
 CODIGO_POR_ERROR: dict[type[ErrorDeDominio], int] = {
     EntidadNoEncontradaError: 404,
     ConflictoDeUnicidadError: 409,
@@ -36,7 +37,7 @@ CODIGO_POR_ERROR: dict[type[ErrorDeDominio], int] = {
 app = FastAPI(
     title=config.APP_NAME,
     version=config.APP_VERSION,
-    description="API principal: inventarios, ventas, alertas, reportes y predicción.",
+    description="API principal: inventarios, ventas, alertas, reportes y prediccion.",
 )
 
 
@@ -65,6 +66,8 @@ app.include_router(categorias_router, prefix="/api/categorias", tags=["categoria
 app.include_router(proveedores_router, prefix="/api/proveedores", tags=["proveedores"])
 app.include_router(inventario_router, prefix="/api/inventario", tags=["inventario"])
 app.include_router(ventas_router, prefix="/api/ventas", tags=["ventas"])
+app.include_router(alertas_router, prefix="/api/alertas", tags=["alertas"])
+app.include_router(reportes_router, prefix="/api/reportes", tags=["reportes"])
 
 
 @app.get("/")
