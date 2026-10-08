@@ -38,7 +38,7 @@ class ProductoCreate(BaseModel):
 class ProductoUpdate(BaseModel):
     # `extra="forbid"`: un campo no declarado se rechaza con 422 en vez de
     # ignorarse en silencio. Es lo que hace que `codigo` (inmutable) y `id`
-    # devuelvan error explícito en un PATCH, en lugar de un 200 engañoso.
+    # devuelvan error expl�cito en un PATCH, en lugar de un 200 enga�oso.
     model_config = ConfigDict(extra="forbid")
 
     nombre: str | None = Field(default=None, min_length=1, max_length=150)
@@ -73,3 +73,13 @@ class ProductoRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     existencia: Decimal
+
+
+class ProductoRef(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    codigo: str
+    nombre: str
+
+

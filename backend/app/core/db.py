@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from functools import lru_cache
+from typing import TypeAlias
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -8,6 +9,8 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.core.config import settings
+
+SesionDB: TypeAlias = AsyncSession
 
 
 @lru_cache

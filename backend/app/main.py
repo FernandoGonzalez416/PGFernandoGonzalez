@@ -9,6 +9,8 @@ from app.api.proveedores import router as proveedores_router
 from app.api.ventas import router as ventas_router
 from app.api.alertas import router as alertas_router
 from app.api.reportes import router as reportes_router
+from app.api.sugerencias import router as sugerencias_router
+from app.api.notificaciones import router as notificaciones_router
 from app.core import config
 from app.core.errores import (
     AnulacionNoPermitidaError,
@@ -21,6 +23,10 @@ from app.core.errores import (
     StockInsuficienteError,
     VencimientoInvalidoError,
     VentaNoAnulableError,
+    AlertaNoEncontradaError,
+    SugerenciaNoEncontradaError,
+    SugerenciaNoPendienteError,
+    NotificacionNoEncontradaError,
 )
 CODIGO_POR_ERROR: dict[type[ErrorDeDominio], int] = {
     EntidadNoEncontradaError: 404,
@@ -32,6 +38,7 @@ CODIGO_POR_ERROR: dict[type[ErrorDeDominio], int] = {
     DescuentoInvalidoError: 422,
     AnulacionNoPermitidaError: 403,
     VentaNoAnulableError: 409,
+    SugerenciaNoPendienteError: 409,
 }
 
 app = FastAPI(
@@ -68,6 +75,8 @@ app.include_router(inventario_router, prefix="/api/inventario", tags=["inventari
 app.include_router(ventas_router, prefix="/api/ventas", tags=["ventas"])
 app.include_router(alertas_router, prefix="/api/alertas", tags=["alertas"])
 app.include_router(reportes_router, prefix="/api/reportes", tags=["reportes"])
+app.include_router(sugerencias_router, prefix="/api/sugerencias", tags=["sugerencias"])
+app.include_router(notificaciones_router, prefix="/api/notificaciones", tags=["notificaciones"])
 
 
 @app.get("/")

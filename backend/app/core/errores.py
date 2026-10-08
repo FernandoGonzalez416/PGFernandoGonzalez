@@ -97,7 +97,27 @@ def _menciona_restriccion(error: IntegrityError, nombre: str) -> bool:
     psycopg expone `constraint_name` como atributo, pero asyncpg —el driver que
     usa el proyecto— no lo tiene y solo lo incluye en el mensaje. Se revisan
     ambos para no atar la traducción de errores al driver.
-    """
+"""
     if getattr(error.orig, "constraint_name", None) == nombre:
         return True
     return f'"{nombre}"' in str(error.orig)
+
+
+class AlertaNoEncontradaError(EntidadNoEncontradaError):
+    def __init__(self) -> None:
+        super().__init__("No existe la alerta solicitada")
+
+
+class SugerenciaNoEncontradaError(EntidadNoEncontradaError):
+    def __init__(self) -> None:
+        super().__init__("No existe la sugerencia solicitada")
+
+
+class SugerenciaNoPendienteError(ErrorDeDominio):
+    def __init__(self) -> None:
+        super().__init__("La sugerencia ya no está pendiente y no admite ese cambio")
+
+
+class NotificacionNoEncontradaError(EntidadNoEncontradaError):
+    def __init__(self) -> None:
+        super().__init__("No existe la notificación solicitada")

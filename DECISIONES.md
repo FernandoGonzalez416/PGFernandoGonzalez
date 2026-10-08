@@ -871,6 +871,55 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 
 ---
 
+## B6. Sugerencias con promedio móvil de 7 días, sin motor de IA (APROBADO — 2026-10-07)
+
+> **Resuelve la decisión bloqueante B6** del plan `backend/docs/PLAN_FASE3_4.md` (§3) y habilita la Fase D. Opción (a) del plan.
+
+### Contexto
+
+- El DDL real impone `sugerencia.prediccion_id NOT NULL` + `UNIQUE (prediccion_id, producto_id)`: **no se puede crear una sugerencia sin una predicción previa**.
+- La estrategia de IA está **aprobada** (P3/P3a/P13) pero `AGENTS.md` **prohíbe implementar el modelo** (código, dependencias, job) hasta autorización explícita.
+- La Fase D necesita sugerencias de reabastecimiento funcionando **ya**, sin esperar esa autorización.
+
+### Decisión
+
+1. **Fila base de predicción** por cada producto activo al ejecutar `POST /api/sugerencias/generar`, usando la **línea base de la tesis**: `metodo='promedio_movil'`, `nivel_confianza='baja'`, `inicio_horizonte = hoy + 1`, `fin_horizonte = hoy + 7`, `observaciones_usadas = 7`, `intervalo_inf`/`intervalo_sup` en `NULL`.
+2. **Promedio diario** = unidades vendidas por producto en los **últimos 7 días** (ventana calendario de 7 días terminando hoy, ventas `estado='activa'` sobre `detalle_venta`; los días sin venta cuentan como 0) → `demanda_pronosticada = promedio × 7`.
+3. **`datos_ficticios` refleja la configuración** `DATOS_FICTICIOS` (nueva variable de entorno, default `false`) en lugar del `true` fijo que planteaba el plan. Con `DATOS_FICTICIOS=true` la predicción se marca `nivel_confianza='simulacion'`; sin él, `'baja'`. Coherente con P4: los ficticios jamás se presentan como reales.
+4. **El motor de Scikit-learn (Random Forest / HistGB / Ridge) queda para una fase posterior**, hasta autorización explícita del usuario. Esta decisión **no** instala dependencias ni escribe el job.
+
+### Consideraciones
+
+- La generación corre en un **SAVEPOINT** (P24): si algo falla, no queda media corrida escrita.
+- `cantidad_sugerida = max(0, demanda_pronosticada − stock_proyectado + umbral_minimo)`, a 2 decimales; solo se crea la sugerencia si es `> 0`.
+- **No se duplica**: si el producto ya tiene una sugerencia `pendiente`, no se crea otra (la predicción de la corrida sí se registra, como traza del pronóstico del día).
+- La notificación generada es **una sola por corrida**, tipo `sugerencia_compra` y `usuario_id NULL` (general). Las alertas de stock/vencimiento **no** escriben en `notificacion` en esta fase: siguen bajo demanda desde `GET /api/alertas/*`.
+- **Desviaciones respecto del plan §8** (aplicada la especificación de la Fase D): el plan declara `GET /api/notificaciones` con `SUGERENCIAS_VER`, `POST /api/notificaciones/{id}/leer` y `POST /api/sugerencias/{id}/atender|/descartar`; se implementa `ALERTAS_VER` para notificaciones, `PATCH /api/notificaciones/{id}/leida`, `PATCH /api/sugerencias/{id}` con `{"estado": ...}` y el alta `POST /api/sugerencias/generar` con `PREDICCION_VER`. Las pruebas van en un único `tests/test_fase_d.py`.
+
+---
+
+## B5. Comprobante de venta en HTML imprimible, sin dependencias nuevas (APROBADO — 2026-10-07)
+
+> **Resuelve la decisión bloqueante B5** del plan `backend/docs/PLAN_FASE3_4.md` (§3) y habilita el comprobante de la Fase E. Opción (a) del plan.
+
+### Contexto
+
+- P8 exige un comprobante **imprimible y descargable en PDF**, pero el proyecto **no tiene ninguna librería PDF instalada** y agregar una es una decisión de arquitectura (dependencia nueva).
+- El comprobante es un **recibo interno** con folio único: **no** es factura tributaria ni está sujeto a SAT/FEL (P8).
+
+### Decisión
+
+- **Vista HTML del recibo con estilos de impresión** (`@media print`), y la descarga a PDF se logra con **imprimir del navegador** (`window.print()` → "Guardar como PDF"), que es el camino nativo del navegador.
+- **Sin dependencias nuevas**: no se agrega `reportlab`, `weasyprint` ni ninguna otra librería de PDF.
+
+### Consideraciones
+
+- El HTML se renderiza **desde los datos ya guardados de la venta** (folio, fecha, líneas, subtotal, descuento, total), nunca recalculados.
+- Si más adelante se necesita un PDF generado en servidor (numeración, marca de agua, envío automático), eso será una **dependencia nueva y requerirá aprobación aparte**; esta decisión no la bloquea.
+- La vista debe mostrar explícitamente que es un **recibo interno no tributario**, sin autorización SAT.
+
+---
+
 
 Registradas aquí, **sin corregir silenciosamente** ni el plan ni el código. Las ya resueltas se marcan con **RESUELTO + fecha** (queda el texto original bajo cada una para no perder el origen de la discrepancia):
 
@@ -889,9 +938,9 @@ Registradas aquí, **sin corregir silenciosamente** ni el plan ni el código. La
 
 **Resueltas el 2026-10-05 (APROBADAS)**: P19 (almacén por defecto), P20 (esquema `test` para pruebas de integración), P21 (redondeo del dinero), P22 (folio concurrente), P23 (acceso de FastAPI y RLS), P24 (límite transaccional: SAVEPOINT + `commit` en el request). Las cuatro primeras corresponden a las decisiones bloqueantes B1–B4 del plan `backend/docs/PLAN_FASE3_4.md` y P23 a B7; **P24 no corresponde a B1–B7**: surgir de una pregunta de arquitectura sobre el límite transaccional, que el plan no cubría.
 
+**Resueltas el 2026-10-07 (APROBADAS)**: **B6** (sugerencias con promedio móvil de 7 días como línea base, `nivel_confianza='baja'` o `'simulacion'` con `DATOS_FICTICIOS`, motor Scikit-learn para fase posterior) y **B5** (comprobante en HTML con estilos de impresión, descarga a PDF vía imprimir del navegador, sin dependencias nuevas). Secciones **B6** y **B5** de más arriba.
+
 Siguen pendientes:
-- **B5. Comprobante en PDF** (P8): HTML con estilos de impresión, o agregar `reportlab`.
-- **B6. Sugerencia sin motor de IA**: la fila base de predicción (`promedio_movil`, confianza `baja`) o dejar `Sugerencia` sin CRUD hasta autorizar el motor.
 - **R4. Estrategia offline definitiva** y su tecnología (P2): se documentará cuando llegue el momento; no bloquea la primera versión.
 - **R5. Detalles de despliegue/hosting** (P12): cuando la aplicación esté avanzada.
 - **R7/R12. Supabase MCP (P17)**: CONFIGURADO y AUTENTICADO (2026-09-21). **Project Ref `spozipecnvhmchxvmsqt` aportado y aplicado** (2026-09-21). Pendiente únicamente: **reiniciar OpenCode** (manual, hecho por el usuario) para cargar las herramientas MCP scoped al proyecto en la sesión. No crear ni modificar objetos en Supabase sin informar antes.

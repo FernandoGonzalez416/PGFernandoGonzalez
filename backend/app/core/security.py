@@ -85,3 +85,7 @@ async def get_current_usuario(
     if not usuario.activo:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Usuario inactivo")
     return usuario
+
+def get_usuario_actual_id(usuario: UsuarioAutenticado = Depends(get_current_usuario)) -> str | None:
+    return usuario.id
+
