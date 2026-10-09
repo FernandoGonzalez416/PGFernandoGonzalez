@@ -1,0 +1,44 @@
+:root {
+  --crema: #faf6f0;
+  --nude: #e0c9bb;
+  --terracota: #c87d71;
+  --cafe: #2d2424;
+  --gloss: #d8b4a0;
+
+  --bg: #faf6f0;
+  --surface: #fffdfb;
+  --surface-soft: #f6efe9;
+  --primary-soft: #f2e1da;
+  --ink: #2d2424;
+  --ink-soft: #6b5a54;
+  --ink-faint: #75655e;
+  --primary: #c87d71;
+  --primary-hover: #d8b4a0;
+  --nude-soft: #f3e7df;
+  --amber: #b0781f;
+  --amber-soft: #faf1e0;
+  --red: #c04a4a;
+  --red-soft: #faeae6;
+  --ok: #3e8c6b;
+  --ok-soft: #e7f1eb;
+  --line: rgba(45, 36, 36, 0.12);
+
+  --shadow-sm: 0 1px 2px rgba(45, 36, 36, 0.06);
+  --shadow-md: 0 8px 24px -12px rgba(45, 36, 36, 0.22);
+  --shadow-lg: 0 24px 60px -28px rgba(45, 36, 36, 0.32);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+
+  --sidebar-w: 248px;
+  --topbar-h: 68px;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-exp: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  --fuente-titulos: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --fuente-cuerpo: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+}
