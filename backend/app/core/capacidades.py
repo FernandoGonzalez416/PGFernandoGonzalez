@@ -40,6 +40,21 @@ CAPACIDADES_POR_ROL: dict[Capacidad, frozenset[str]] = {
 }
 
 
+def capacidades_de_rol(rol: str) -> list[str]:
+    """Capacidades que tiene un rol, derivadas de CAPACIDADES_POR_ROL.
+
+    Única fuente de verdad: si un rol deja de tener una capacidad, la API y el
+    frontend se enteran por esta misma función. El orden es estable
+    (alfabético por valor) para que las respuestas sean deterministas y
+    fáciles de comparar en las pruebas.
+    """
+    return sorted(
+        capacidad.value
+        for capacidad, roles in CAPACIDADES_POR_ROL.items()
+        if rol in roles
+    )
+
+
 def verificar_anulacion_venta(venta_usuario_id: str, usuario_id: str, rol: str) -> None:
     """P14 fila 9: admin y dueño anulan cualquier venta; padre solo las de su propia sesión."""
     if rol == "padre" and venta_usuario_id != usuario_id:

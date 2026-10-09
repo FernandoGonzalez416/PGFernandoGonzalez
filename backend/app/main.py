@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.categorias import router as categorias_router
@@ -66,6 +67,14 @@ async def manejar_error_de_dominio(
 
 
 app.add_exception_handler(ErrorDeDominio, manejar_error_de_dominio)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 app.include_router(me_router, prefix="/api", tags=["me"])
 app.include_router(productos_router, prefix="/api/productos", tags=["productos"])

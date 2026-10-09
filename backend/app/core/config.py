@@ -14,6 +14,14 @@ def _a_bool(valor: str) -> bool:
     return valor.strip().lower() in {"1", "true", "yes", "si", "sí"}
 
 
+def _a_lista(valor: str) -> list[str]:
+    """Separa una variable de entorno por comas, descartando elementos vacíos."""
+    return [elemento.strip() for elemento in valor.split(",") if elemento.strip()]
+
+
+ORIGENES_CORS_POR_DEFECTO = "http://localhost:5173,http://127.0.0.1:5173"
+
+
 class Settings:
     APP_ENV: str = os.getenv("APP_ENV", "development")
     APP_NAME: str = "Plataforma de inventarios y reabastecimiento"
@@ -24,6 +32,9 @@ class Settings:
     DATABASE_URL: str = os.getenv("DATABASE_URL", "")
     ALMACEN_PREDETERMINADO: str = os.getenv("ALMACEN_PREDETERMINADO", "Principal")
     DATOS_FICTICIOS: bool = _a_bool(os.getenv("DATOS_FICTICIOS", "false"))
+    CORS_ORIGINS: list[str] = _a_lista(
+        os.getenv("CORS_ORIGINS", ORIGENES_CORS_POR_DEFECTO)
+    )
 
 
 settings = Settings()
@@ -37,3 +48,4 @@ SUPABASE_SERVICE_ROLE_KEY = settings.SUPABASE_SERVICE_ROLE_KEY
 DATABASE_URL = settings.DATABASE_URL
 ALMACEN_PREDETERMINADO = settings.ALMACEN_PREDETERMINADO
 DATOS_FICTICIOS = settings.DATOS_FICTICIOS
+CORS_ORIGINS = settings.CORS_ORIGINS
