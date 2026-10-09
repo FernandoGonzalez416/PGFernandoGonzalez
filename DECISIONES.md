@@ -945,6 +945,7 @@ Siguen pendientes:
 - **R5. Detalles de despliegue/hosting** (P12): cuando la aplicación esté avanzada.
 - **R7/R12. Supabase MCP (P17)**: CONFIGURADO y AUTENTICADO (2026-09-21). **Project Ref `spozipecnvhmchxvmsqt` aportado y aplicado** (2026-09-21). Pendiente únicamente: **reiniciar OpenCode** (manual, hecho por el usuario) para cargar las herramientas MCP scoped al proyecto en la sesión. No crear ni modificar objetos en Supabase sin informar antes.
 - **Inicio del desarrollo**: crear código (React/FastAPI/Node/Supabase/IA), instalar dependencias o crear tablas queda **prohibido hasta orden explícita** del usuario.
+- **Paleta del frontend vs. tesis §5.2.4 (F2)**: el frontend implementa la paleta crema/nude/terracota/café/gloss definida en `.opencode/rules/diseno.md`, que **difiere** de la paleta morado/blanco/dorado de la tesis §5.2.4. Es la identidad **ya reaprobada en P7 (2026-09-26)** y **no** se modifica ni la tesis ni P7; se deja trazada aquí por cierre de la fase F2. Queda **pendiente la confirmación explícita de Fernando** de mantener esta desviación de forma definitiva (a explicar en la defensa). No es una desviación nueva: solo se registra en el contexto de F2.
 
 ---
 

@@ -3,17 +3,42 @@ import { CAPACIDADES } from '../../api/capacidades'
 import { useAuth } from '../../auth/useAuth'
 import { useCan } from '../../auth/useCan'
 
+type ItemNav = { to: string; etiqueta: string; visible: boolean; end?: boolean }
+
 export function Sidebar({ abierto, onNavegar }: { abierto: boolean; onNavegar: () => void }) {
   const { perfil } = useAuth()
   const puedeProductos = useCan(CAPACIDADES.productosConsultar)
   const puedeCategorias = useCan(CAPACIDADES.categoriasGestionar)
   const puedeProveedores = useCan(CAPACIDADES.proveedoresGestionar)
+  const puedeVentasRegistrar = useCan(CAPACIDADES.ventasRegistrar)
+  const puedeStockConsultar = useCan(CAPACIDADES.stockConsultar)
 
-  const items = [
-    { to: '/productos', etiqueta: 'Productos', visible: puedeProductos },
-    { to: '/categorias', etiqueta: 'Categorías', visible: puedeCategorias },
-    { to: '/proveedores', etiqueta: 'Proveedores', visible: puedeProveedores },
-  ].filter((item) => item.visible)
+  const grupos: { etiqueta: string; items: ItemNav[] }[] = [
+    {
+      etiqueta: 'Catálogo',
+      items: [
+        { to: '/productos', etiqueta: 'Productos', visible: puedeProductos },
+        { to: '/categorias', etiqueta: 'Categorías', visible: puedeCategorias },
+        { to: '/proveedores', etiqueta: 'Proveedores', visible: puedeProveedores },
+      ],
+    },
+    {
+      etiqueta: 'Ventas',
+      items: [
+        { to: '/ventas/nueva', etiqueta: 'Nueva venta', visible: puedeVentasRegistrar },
+        { to: '/ventas', etiqueta: 'Historial', visible: puedeStockConsultar, end: true },
+      ],
+    },
+    {
+      etiqueta: 'Inventario',
+      items: [{ to: '/inventario', etiqueta: 'Inventario', visible: puedeStockConsultar }],
+    },
+  ]
+    .map((grupo) => ({
+      etiqueta: grupo.etiqueta,
+      items: grupo.items.filter((item: ItemNav) => item.visible),
+    }))
+    .filter((grupo) => grupo.items.length > 0)
 
   return (
     <aside className={`sidebar${abierto ? ' abierto' : ''}`}>
@@ -26,17 +51,22 @@ export function Sidebar({ abierto, onNavegar }: { abierto: boolean; onNavegar: (
       </div>
 
       <nav className="nav" aria-label="Navegación principal">
-        <span className="nav-group-label">Catálogo</span>
-        {items.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-            onClick={onNavegar}
-          >
-            <span className="nav-dot" aria-hidden="true" />
-            {item.etiqueta}
-          </NavLink>
+        {grupos.map((grupo) => (
+          <div key={grupo.etiqueta} className="nav-group">
+            <span className="nav-group-label">{grupo.etiqueta}</span>
+            {grupo.items.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+                onClick={onNavegar}
+              >
+                <span className="nav-dot" aria-hidden="true" />
+                {item.etiqueta}
+              </NavLink>
+            ))}
+          </div>
         ))}
       </nav>
 

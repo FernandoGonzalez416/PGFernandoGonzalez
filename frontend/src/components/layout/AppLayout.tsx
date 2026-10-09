@@ -8,12 +8,22 @@ const TITULOS: Record<string, string> = {
   '/productos': 'Productos',
   '/categorias': 'Categorías',
   '/proveedores': 'Proveedores',
+  '/ventas': 'Ventas',
+  '/ventas/nueva': 'Nueva venta',
+  '/inventario': 'Inventario',
+}
+
+function tituloDeRuta(pathname: string): string {
+  if (pathname.startsWith('/ventas/nueva')) return 'Nueva venta'
+  if (pathname.endsWith('/recibo')) return 'Recibo'
+  if (pathname.startsWith('/ventas/')) return 'Detalle de venta'
+  return TITULOS[pathname] ?? 'Panel'
 }
 
 export function AppLayout() {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const { pathname } = useLocation()
-  const titulo = TITULOS[pathname] ?? 'Panel'
+  const titulo = tituloDeRuta(pathname)
 
   return (
     <div className="app-shell">
