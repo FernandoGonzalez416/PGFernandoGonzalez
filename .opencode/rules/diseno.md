@@ -29,44 +29,60 @@ Si la tarea incluye animación, cargar también la documentación de **Motion** 
 9. **Respetar `prefers-reduced-motion`**: cualquier motion debe degradar a estático con `@media (prefers-reduced-motion: reduce)`; hover gated con `@media (hover:hover) and (pointer:fine)`.
 10. **Performance**: animar solo `transform` y `opacity` (nunca top/left/width/height); `backdrop-blur` solo en elementos fixed/sticky; sin `window.addEventListener('scroll')` (usar IntersectionObserver/Motion `useScroll`).
 
-## Paleta de colores (diseño aprobado)
+## Paleta de colores (diseño aprobado — identidad oficial "Familia de la Cruz")
 
-Base de la identidad de la tesis: **morado / blanco con acento dorado suave**. Estados: ámbar = stock bajo; rojo = vencimiento próximo / agotado. No usar otros acentos de color para no romper la coherencia.
+Base de la identidad oficial: **blanco crema / rosa nude / terracota / café oscuro / gloss soft**. Reemplaza la paleta morado-blanco con dorado (descartada el 2026-09-26, ver P7 en `DECISIONES.md`). Estados: ámbar = stock bajo; rojo = vencimiento próximo/agotado; verde = disponible. No usar otros acentos de color para no romper la coherencia.
+
+### Colores de marca
 
 | Rol | Variable | Valor | Uso |
 |---|---|---|---|
-| Fondo | `--bg` | `#F6F4FA` | Fondo general (lila-blancuzco frío) |
-| Superficie | `--surface` | `#FFFFFF` | Tarjetas, sidebar |
-| Superficie suave | `--surface-soft` | `#FBF9FE` | Filas hover, fondos sutiles |
-| Tinta principal | `--ink` | `#211A33` | Texto principal (muy cercano al negro del brand, no #000) |
-| Tinta suave | `--ink-soft` | `#6B6480` | Texto secundario |
-| Tinta tenue | `--ink-faint` | `#9B94B0` | Labels, placeholders, iconos |
-| Primario | `--primary` | `#6A47C7` | Botones principales, enlaces, acentos |
-| Primario profundo | `--primary-deep` | `#5734B0` | Hover/gradientes primario |
-| Primario suave | `--primary-soft` | `#EDE6FB` | Fondo de items activos |
-| Dorado suave | `--gold` | `#C8A35C` | Acento premium (CTA destacados, marca) |
-| Dorado suave | `--gold-soft` | `#F7EFDD` | Fondos de acento dorado |
-| Ámbar (stock bajo) | `--amber` | `#B0781F` | Texto/iconos alerta stock bajo |
-| Ámbar suave | `--amber-soft` | `#FBF1D9` | Fondos/badges ámbar |
-| Rojo (vencer/agotado) | `--red` | `#C04A4A` | Texto/iconos vencimiento o agotado |
-| Rojo suave | `--red-soft` | `#FBE7E3` | Fondos/badges rojo |
+| Blanco crema | `--crema` | `#FAF6F0` | Fondo general y áreas de lectura limpia |
+| Rosa nude suave | `--nude` | `#E0C9BB` | Fondos secundarios, tarjetas de productos y secciones destacadas |
+| Terracota | `--terracota` | `#C87D71` | Acento primario: CTA, precios y etiquetas destacadas, bordes y estados activos |
+| Café oscuro profundo | `--cafe` | `#2D2424` | Tipografía, títulos, iconos y encabezados (reemplaza al negro puro) |
+| Gloss soft | `--gloss` | `#D8B4A0` | Estados *hover*, bordes activos e interacciones secundarias |
+
+### Roles semánticos (derivados de la marca)
+
+| Rol | Variable | Valor | Uso |
+|---|---|---|---|
+| Fondo | `--bg` | `#FAF6F0` | Fondo general de la aplicación |
+| Superficie | `--surface` | `#FFFDFB` | Tarjetas, paneles, sidebar (blanco cálido, nunca `#FFFFFF` puro) |
+| Superficie suave | `--surface-soft` | `#F6EFE9` | Filas *hover*, fondos sutiles, campos de formulario |
+| Tinte terracota | `--primary-soft` | `#F2E1DA` | Fondos de elementos activos o en hover |
+| Tinta principal | `--ink` | `#2D2424` | Texto principal, títulos, iconos (muy cercano al negro, no `#000`) |
+| Tinta suave | `--ink-soft` | `#6B5A54` | Texto secundario (6.1:1 sobre crema) |
+| Tinta tenue | `--ink-faint` | `#75655E` | Labels, placeholders, iconos inactivos (5.2:1 sobre crema) |
+| Primario | `--primary` | `#C87D71` | Relleno de CTA y de estados activos (NO como color de texto) |
+| Primario hover | `--primary-hover` | `#D8B4A0` | Fondo en *hover* de CTA y de estados activos |
+| Nude suave | `--nude-soft` | `#F3E7DF` | Fondos de apoyo, chips y degradados de panel |
+| Ámbar (stock bajo) | `--amber` | `#B0781F` | Texto/iconos de alerta por stock bajo |
+| Ámbar suave | `--amber-soft` | `#FAF1E0` | Fondos/badges ámbar |
+| Rojo (vencer/agotado) | `--red` | `#C04A4A` | Texto/iconos de vencimiento o agotado |
+| Rojo suave | `--red-soft` | `#FAEAE6` | Fondos/badges rojo |
 | OK | `--ok` | `#3E8C6B` | Estados positivos (disponible, completo) |
-| OK suave | `--ok-soft` | `#E4F2EA` | Badges positivos |
-| Línea | `--line` | `rgba(107,100,128,0.14)` | Hairlines/bordes suaves (no gris puro) |
+| OK suave | `--ok-soft` | `#E7F1EB` | Badges positivos |
+| Línea | `--line` | `rgba(45, 36, 36, 0.12)` | Hairlines/bordes suaves (nunca gris puro) |
 
 Reglas de la paleta:
-- **Un solo acento de color por vista**: morado. El dorado es el segundo acento reservado a momentos premium (CTA principal destacado, marca). Ámbar/rojo/verde son semánticos (estados), no decorativos.
-- **Shadow con tinte del fondo**: nunca sombras negras puras; usar `rgba(87,52,176,…)` o equivalente.
-- **Contraste WCAG AA**: texto sobre fondo ≥ 4.5:1; botones con texto legible (revisar antes de entregar).
-- **Sin #000 ni #FFF puros** en fondos/textos de marca; usar `--ink` y `--surface`.
+- **Un solo acento de color por vista**: terracota. El crema es el fondo, el nude y el gloss son tonos de apoyo de la misma familia cálida.
+- **El terracota nunca es color de texto sobre crema**: `#C87D71` sobre `#FAF6F0` da 2.9:1 y no cumple AA. El terracota se usa como **relleno, borde, subrayado o estado activo**, y el texto sobre relleno terracota es siempre **café `#2D2424`** (4.8:1 ✓ AA).
+- **Sobre fondo `nude` todo el texto es café**: `--ink-soft` y `--ink-faint` no alcanzan AA sobre `#E0C9BB`; se sube a `--ink` y la jerarquía se marca con tamaño y peso.
+- **`--gloss` nunca es color de texto ni de icono**: `#D8B4A0` sobre crema da 1.9:1 y sobre `nude-soft` 1.6:1, ambos ilegibles. El gloss es exclusivamente relleno de *hover* y borde. Para íconos con significado usar `--ink-soft` o `--ink` (≥ 4.5:1).
+- **Colores semánticos solo para estados**: ámbar/rojo/verde comunican urgencia o salud del stock; nunca se usan como decoración ni como acento de vista.
+- **Sombras con tinte del fondo**: `rgba(45,36,36,…)` o `rgba(200,125,113,…)`; nunca sombras negras puras.
+- **Contraste WCAG AA**: texto ≥ 4.5:1; bordes, iconos con significado y elementos gráficos ≥ 3:1. El anillo de foco va en `--ink` con halo `--terracota` (el terracota solo no llega a 3:1 sobre crema).
+- **Sin `#000` ni `#FFFFFF` puros** en fondos o textos de marca; usar `--ink` y `--surface`.
 
 ## Tipografía
 
-- **Familia**: Plus Jakarta Sans (instalada vía Google Fonts como referencia; en producción usar `next/font` o self-hosted). Prohibido Inter, Roboto, Arial, Open Sans, Helvetica como default.
-- Display: `font-weight 800`, `letter-spacing -0.02em`, `leading 1.1`.
-- Body: `font-weight 400-600`, `color var(--ink-soft)`, `max-width 65ch` en párrafos largos.
+- **Títulos y encabezados (H1, H2, H3, nombres de líneas, nombre del establecimiento)**: **Playfair Display** (serif) 500/600/700. `font-weight: 700`, `letter-spacing: -0.01em`, `leading: 1.15`.
+- **Cuerpo de texto, precios, filtros, navegación, botones y etiquetas**: **Montserrat** (sans-serif) 400/500/600/700/800. `font-weight: 400-600`, `color: var(--ink-soft)`, `max-width: 65ch` en párrafos largos.
+- Ambas familias son de uso libre; en producción servirlas como archivos locales (self-hosted) en vez de cargar Google Fonts en caliente.
 - Números/datos: `font-variant-numeric: tabular-nums` en KPIs, tablas y montos.
-- Prohibido el serif como default; solo si la identidad de marca lo pide.
+- Prohibido Inter, Roboto, Arial, Open Sans, Helvetica como default.
+- El serif solo aparece en títulos, donde lo pide la identidad de marca; el cuerpo es siempre Montserrat.
 
 ## Motion (valores de referencia)
 
@@ -90,4 +106,4 @@ Cuando se busque inspiración/dirección visual, pensar en trabajos reales de ca
 - [ ] Layout responsive correcto (prueba visual mobile-first), colapso bajo 768px.
 - [ ] Motion con curvas custom y `prefers-reduced-motion` respetado.
 - [ ] Solo se anima transform/opacity; sin scroll-listener de ventana.
-- [ ] Paleta según tabla (morado/dorado/semánticos), un acento por vista.
+- [ ] Paleta según tabla (crema/nude/terracota/café/gloss + semánticos), un acento por vista.

@@ -3,36 +3,40 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Prototipo de prueba — 4 vistas · Plataforma de inventarios</title>
+<title>Familia de la Cruz — Prototipo de 4 vistas · Plataforma de inventarios</title>
 <meta name="description" content="Prototipo visual sin funcionalidad. Datos ficticios de prueba. No es el diseño final." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
 <style>
   /* ============================= TOKENS ============================= */
   :root {
-    --bg: #F6F4FA;
-    --surface: #FFFFFF;
-    --surface-soft: #FBF9FE;
-    --ink: #211A33;
-    --ink-soft: #6B6480;
-    --ink-faint: #9B94B0;
-    --primary: #6A47C7;
-    --primary-deep: #5734B0;
-    --primary-soft: #EDE6FB;
-    --gold: #C8A35C;
-    --gold-deep: #A97F3D;
-    --gold-soft: #F7EFDD;
+    /* Marca — Familia de la Cruz */
+    --crema: #FAF6F0;
+    --nude: #E0C9BB;
+    --terracota: #C87D71;
+    --cafe: #2D2424;
+    --gloss: #D8B4A0;
+
+    /* Roles semánticos */
+    --bg: var(--crema);
+    --surface: #FFFDFB;
+    --surface-soft: #F6EFE9;
+    --ink: var(--cafe);
+    --ink-soft: #6B5A54;
+    --ink-faint: #75655E;
+    --primary: var(--terracota);
+    --primary-hover: var(--gloss);
+    --primary-soft: #F2E1DA;
+    --nude-soft: #F3E7DF;
     --amber: #B0781F;
-    --amber-soft: #FBF1D9;
+    --amber-soft: #FAF1E0;
     --red: #C04A4A;
-    --red-soft: #FBE7E3;
+    --red-soft: #FAEAE6;
     --ok: #3E8C6B;
-    --ok-soft: #E4F2EA;
-    --line: rgba(107, 100, 128, 0.14);
-    --line-strong: rgba(107, 100, 128, 0.24);
-    --shadow-card: 0 1px 2px rgba(38, 26, 66, 0.05), 0 18px 44px -22px rgba(87, 52, 176, 0.22);
-    --shadow-hover: 0 2px 4px rgba(38, 26, 66, 0.06), 0 30px 60px -24px rgba(87, 52, 176, 0.3);
+    --ok-soft: #E7F1EB;
+    --line: rgba(45, 36, 36, 0.12);
+    --line-strong: rgba(45, 36, 36, 0.22);
     --r-lg: 22px;
     --r-md: 16px;
     --r-sm: 12px;
@@ -45,7 +49,7 @@
   html { -webkit-text-size-adjust: 100%; }
 
   body {
-    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-family: "Montserrat", system-ui, sans-serif;
     background: var(--bg);
     color: var(--ink);
     line-height: 1.5;
@@ -67,31 +71,34 @@
   a { text-decoration: none; color: inherit; }
   button { font-family: inherit; }
 
+  /* Serif solo en títulos (identidad de marca); el cuerpo es Montserrat */
+  h1, h2, h3 { font-family: "Playfair Display", Georgia, serif; font-weight: 700; letter-spacing: -0.01em; line-height: 1.15; }
+
   /* ============================= BARRA DE PROTOTIPO ============================= */
   .proto-bar {
     position: sticky; top: 0; z-index: 90;
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
     padding: 10px 18px;
     background: var(--ink);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(250, 246, 240, 0.12);
   }
   .proto-bar .proto-label {
-    font-size: 11px; font-weight: 700; color: #F3EEFF;
-    background: rgba(255,255,255,0.1);
+    font-size: 11px; font-weight: 700; color: var(--crema);
+    background: rgba(250, 246, 240, 0.1);
     padding: 5px 10px; border-radius: 999px;
     letter-spacing: 0.06em; text-transform: uppercase;
     margin-right: 6px; white-space: nowrap;
   }
   .proto-tab {
-    font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.72);
+    font-size: 12px; font-weight: 600; color: rgba(250, 246, 240, 0.75);
     background: transparent; border: 0; cursor: pointer;
     padding: 7px 14px; border-radius: 999px;
     transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out), transform 200ms var(--ease-out);
   }
-  .proto-tab:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .proto-tab:hover { background: rgba(250, 246, 240, 0.1); color: var(--crema); }
   .proto-tab:active { transform: scale(0.96); }
-  .proto-tab.active { background: #F3EEFF; color: var(--ink); }
-  .proto-hint { margin-left: auto; font-size: 10.5px; color: rgba(255,255,255,0.45); font-weight: 500; white-space: nowrap; }
+  .proto-tab.active { background: var(--terracota); color: var(--ink); }
+  .proto-hint { margin-left: auto; font-size: 10.5px; color: rgba(250, 246, 240, 0.6); font-weight: 500; white-space: nowrap; }
 
   .app {
     position: relative; z-index: 1;
@@ -109,7 +116,7 @@
     height: calc(100dvh - 57px);
     padding: 26px 16px;
     display: flex; flex-direction: column; gap: 22px;
-    background: linear-gradient(180deg, #FCFBFE 0%, #F3EEF9 100%);
+    background: linear-gradient(180deg, #FFFDFB 0%, var(--nude-soft) 100%);
     border-right: 1px solid var(--line);
   }
 
@@ -117,11 +124,12 @@
   .brand-mark {
     width: 42px; height: 42px; border-radius: 14px; flex-shrink: 0;
     display: grid; place-items: center;
-    background: linear-gradient(145deg, var(--primary) 0%, var(--primary-deep) 100%);
-    box-shadow: 0 10px 22px -10px rgba(87, 52, 176, 0.55), inset 0 1px 0 rgba(255,255,255,0.22);
+    background: linear-gradient(145deg, var(--gloss) 0%, var(--terracota) 100%);
+    color: var(--ink);
+    box-shadow: 0 10px 22px -10px rgba(200, 125, 113, 0.55), inset 0 1px 0 rgba(255,255,255,0.35);
   }
   .brand-mark svg { width: 22px; height: 22px; }
-  .brand-name { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; }
+  .brand-name { font-family: "Playfair Display", Georgia, serif; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
   .brand-tag { font-size: 11.5px; color: var(--ink-soft); font-weight: 500; }
 
   .nav-group { display: flex; flex-direction: column; gap: 6px; }
@@ -134,10 +142,11 @@
     transition: color 220ms var(--ease-out), background-color 220ms var(--ease-out), transform 220ms var(--ease-out);
   }
   .nav-item svg { width: 18px; height: 18px; stroke-width: 1.6; color: var(--ink-faint); transition: color 220ms var(--ease-out); }
-  .nav-item:hover { color: var(--primary); transform: translateX(2px); }
-  .nav-item:hover svg { color: var(--primary); }
-  .nav-item.active { color: var(--primary-deep); background: var(--primary-soft); box-shadow: inset 0 0 0 1px rgba(106,71,199,0.22); }
-  .nav-item.active svg { color: var(--primary); }
+  @media (hover: hover) and (pointer: fine) {
+    .nav-item:hover { color: var(--ink); background: var(--surface-soft); transform: translateX(2px); }
+  }
+  .nav-item.active { color: var(--ink); background: var(--terracota); box-shadow: inset 0 0 0 1px rgba(45, 36, 36, 0.12); }
+  .nav-item.active svg { color: var(--ink); }
   .nav-badge { margin-left: auto; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: var(--amber); background: var(--amber-soft); }
   .nav-badge.warn { color: var(--red); background: var(--red-soft); }
 
@@ -145,25 +154,25 @@
     margin-top: auto;
     border-radius: var(--r-md);
     padding: 16px;
-    background: linear-gradient(150deg, #F2ECFC 0%, #EFE8FA 100%);
-    box-shadow: inset 0 0 0 1px rgba(106, 71, 199, 0.16);
+    background: linear-gradient(150deg, var(--nude-soft) 0%, var(--primary-soft) 100%);
+    box-shadow: inset 0 0 0 1px rgba(200, 125, 113, 0.2);
     position: relative; overflow: hidden;
   }
   .side-card::before {
     content: ""; position: absolute; top: -42px; right: -42px;
     width: 108px; height: 108px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(200, 163, 92, 0.28), transparent 68%);
+    background: radial-gradient(circle, rgba(200, 125, 113, 0.28), transparent 68%);
     pointer-events: none;
   }
   .side-card-title { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; }
-  .side-card-text { font-size: 12px; color: var(--ink-soft); margin: 4px 0 12px; line-height: 1.45; }
+  .side-card-text { font-size: 12px; color: var(--ink); margin: 4px 0 12px; line-height: 1.45; }
 
   .user { display: flex; align-items: center; gap: 11px; padding: 12px 10px 0; border-top: 1px solid var(--line); margin-top: 4px; }
   .avatar {
     width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-    display: grid; place-items: center; font-size: 13px; font-weight: 800; color: #fff;
-    background: linear-gradient(145deg, var(--gold), var(--gold-deep));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+    display: grid; place-items: center; font-size: 13px; font-weight: 800; color: var(--ink);
+    background: linear-gradient(145deg, var(--gloss), var(--terracota));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
   }
   .user-name { font-size: 13px; font-weight: 700; line-height: 1.2; }
   .user-role { font-size: 11px; color: var(--ink-soft); }
@@ -187,16 +196,16 @@
     font-family: inherit; font-size: 13px; color: var(--ink);
     padding: 10px 14px 10px 40px; border-radius: 999px; border: 0;
     background: var(--surface); width: 220px; outline: none;
-    box-shadow: inset 0 0 0 1px var(--line), 0 10px 26px -18px rgba(38,26,66,0.35);
+    box-shadow: inset 0 0 0 1px var(--line), 0 10px 26px -18px rgba(45,36,36,0.38);
     transition: box-shadow 240ms var(--ease-out), width 300ms var(--ease-exp);
   }
   .search input::placeholder { color: var(--ink-faint); font-weight: 500; }
-  .search input:focus { box-shadow: inset 0 0 0 1.5px var(--primary), 0 14px 30px -18px rgba(87,52,176,0.5); width: 264px; }
+  .search input:focus { box-shadow: inset 0 0 0 1.5px var(--ink), 0 0 0 4px rgba(200, 125, 113, 0.28); width: 264px; }
 
   .icon-btn {
     width: 38px; height: 38px; border-radius: 50%; border: 0;
     background: var(--surface); display: grid; place-items: center; cursor: pointer; position: relative;
-    box-shadow: inset 0 0 0 1px var(--line), 0 10px 26px -18px rgba(38,26,66,0.35);
+    box-shadow: inset 0 0 0 1px var(--line), 0 10px 26px -18px rgba(45,36,36,0.38);
     transition: transform 220ms var(--ease-out), box-shadow 240ms var(--ease-out);
   }
   .icon-btn svg { width: 18px; height: 18px; stroke-width: 1.6; color: var(--ink-soft); }
@@ -206,7 +215,7 @@
 
   .scrim {
     position: fixed; inset: 0; z-index: 75;
-    background: rgba(33, 26, 51, 0.35);
+    background: rgba(45, 36, 36, 0.38);
     opacity: 0; pointer-events: none;
     transition: opacity 300ms var(--ease-out);
   }
@@ -220,12 +229,12 @@
   .shell {
     border-radius: calc(var(--r-lg) + 6px);
     padding: 6px;
-    background: linear-gradient(180deg, rgba(107,100,128,0.1), rgba(107,100,128,0.05));
-    box-shadow: inset 0 0 0 1px rgba(107,100,128,0.1);
+    background: linear-gradient(180deg, rgba(45,36,36,0.1), rgba(45,36,36,0.05));
+    box-shadow: inset 0 0 0 1px rgba(45,36,36,0.08);
     transition: transform 300ms var(--ease-exp), box-shadow 300ms var(--ease-exp);
   }
   @media (hover: hover) and (pointer: fine) {
-    .shell:hover { transform: translateY(-3px); box-shadow: inset 0 0 0 1px rgba(106,71,199,0.14), 0 26px 52px -26px rgba(87,52,176,0.34); }
+    .shell:hover { transform: translateY(-3px); box-shadow: inset 0 0 0 1px rgba(200,125,113,0.2), 0 26px 52px -26px rgba(200,125,113,0.4); }
   }
   .shell-inner {
     background: var(--surface);
@@ -244,11 +253,11 @@
   .btn svg { width: 16px; height: 16px; stroke-width: 1.8; transition: transform 240ms var(--ease-out); }
   .btn:hover svg { transform: translateX(2px); }
   .btn:active { transform: scale(0.97); }
-  .btn-primary { color: #fff; background: var(--primary); box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 14px 26px -12px rgba(87,52,176,0.55); }
-  .btn-primary:hover { background: var(--primary-deep); transform: translateY(-1px); }
-  .btn-gold { color: #3A2C10; background: var(--gold); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 14px 26px -12px rgba(169,127,61,0.5); }
-  .btn-gold:hover { filter: brightness(1.05); transform: translateY(-1px); }
-  .btn-ghost { color: var(--primary-deep); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .btn-primary { color: var(--ink); background: var(--primary); box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 14px 26px -12px rgba(200,125,113,0.6); }
+  .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+  .btn-nude { color: var(--ink); background: var(--nude); box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 14px 26px -12px rgba(200,125,113,0.4); }
+  .btn-nude:hover { background: var(--gloss); transform: translateY(-1px); }
+  .btn-ghost { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line-strong); }
   .btn-ghost:hover { background: var(--surface-soft); transform: translateY(-1px); }
   .btn-sm { padding: 8px 14px; font-size: 12.5px; }
 
@@ -261,7 +270,7 @@
   .pill.amber { color: var(--amber); background: var(--amber-soft); }
   .pill.red { color: var(--red); background: var(--red-soft); }
   .pill.neutral { color: var(--ink-soft); background: var(--surface-soft); box-shadow: inset 0 0 0 1px var(--line); }
-  .pill.gold { color: var(--gold-deep); background: var(--gold-soft); }
+  .pill.nude { color: var(--ink); background: var(--nude); }
 
   .bare { background: transparent; box-shadow: none; }
   .bare .shell-inner { background: transparent; box-shadow: none; padding: 0; }
@@ -269,20 +278,22 @@
   .swatch {
     width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
     display: grid; place-items: center;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 8px 18px -10px rgba(38,26,66,0.5);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 8px 18px -10px rgba(45,36,36,0.5);
   }
   .swatch svg { width: 19px; height: 19px; stroke-width: 1.5; }
+  /* Las muestras de tono representan el COLOR DEL PRODUCTO (datos del catálogo),
+     no la interfaz: por eso mantienen tonos propios y varied. */
   .sw-violet { background: linear-gradient(145deg, #C9B5F2, #8F6EDF); color: #3D2A7A; }
-  .sw-gold { background: linear-gradient(145deg, #EAD3A7, #D2AC63); color: #8A6424; }
+  .sw-gold { background: linear-gradient(145deg, #EAD3A7, #D2AC63); color: #5A4718; }
   .sw-sage { background: linear-gradient(145deg, #D4E7DB, #9CC3AE); color: #2C6B4E; }
-  .sw-coral { background: linear-gradient(145deg, #F5CFC7, #E5A79B); color: #9C4638; }
+  .sw-coral { background: linear-gradient(145deg, #F5CFC7, #E5A79B); color: #6E3A30; }
 
   .prod { display: flex; align-items: center; gap: 12px; }
   .prod-name { font-weight: 700; font-size: 13.5px; line-height: 1.3; }
   .prod-cat { font-size: 11.5px; color: var(--ink-faint); }
 
-  .link-row { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--primary); transition: gap 220ms var(--ease-out); }
-  .link-row svg { width: 14px; height: 14px; stroke-width: 1.8; }
+  .link-row { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink); transition: gap 220ms var(--ease-out); }
+  .link-row svg { width: 14px; height: 14px; stroke-width: 1.8; color: var(--ink-soft); }
   .link-row:hover { gap: 9px; }
 
   .mini-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
@@ -306,9 +317,11 @@
     box-shadow: inset 0 0 0 1px var(--line);
     transition: color 220ms var(--ease-out), background-color 220ms var(--ease-out), box-shadow 240ms var(--ease-out), transform 200ms var(--ease-out);
   }
-  .chip:hover { color: var(--primary-deep); }
+  @media (hover: hover) and (pointer: fine) {
+    .chip:hover { color: var(--ink); background: var(--surface-soft); }
+  }
   .chip:active { transform: scale(0.96); }
-  .chip.active { color: var(--primary-deep); background: var(--primary-soft); box-shadow: inset 0 0 0 1px rgba(106,71,199,0.3); }
+  .chip.active { color: var(--ink); background: var(--terracota); box-shadow: inset 0 0 0 1px rgba(45, 36, 36, 0.12); }
 
   /* ============================= VISTAS ============================= */
   .view { display: none; }
@@ -327,43 +340,46 @@
     padding: clamp(24px, 3.4vw, 32px);
     display: grid; grid-template-columns: 1.35fr 1fr; gap: 24px; align-items: center;
     background:
-      radial-gradient(30rem 18rem at 90% -40%, rgba(255,255,255,0.16), transparent 60%),
-      linear-gradient(120deg, var(--primary-deep) 0%, #7B5BD8 58%, #8F72DE 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 24px 48px -24px rgba(87,52,176,0.5);
+      radial-gradient(30rem 18rem at 90% -40%, rgba(255,255,255,0.28), transparent 60%),
+      linear-gradient(120deg, var(--terracota) 0%, var(--gloss) 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 24px 48px -24px rgba(200, 125, 113, 0.55);
+    color: var(--ink);
     position: relative; overflow: hidden;
   }
   .bento-hero::after {
     content: ""; position: absolute; right: -70px; top: -110px;
     width: 300px; height: 300px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,0.09), transparent 65%);
+    background: radial-gradient(circle, rgba(255,255,255,0.22), transparent 65%);
   }
   .bento-hero .hero-body { position: relative; z-index: 1; }
   .eyebrow {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em;
     padding: 5px 12px; border-radius: 999px;
-    background: rgba(255,255,255,0.12); color: #F3EEFF;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); margin-bottom: 12px;
+    background: rgba(255,255,255,0.34); color: var(--ink);
+    box-shadow: inset 0 0 0 1px rgba(45, 36, 36, 0.14); margin-bottom: 12px;
   }
-  .bento-hero h2 { font-size: clamp(20px, 2.8vw, 27px); font-weight: 800; letter-spacing: -0.02em; color: #fff; line-height: 1.15; margin-bottom: 8px; }
-  .bento-hero p { font-size: clamp(12.5px, 1.4vw, 13.5px); color: rgba(255,255,255,0.82); max-width: 46ch; }
+  .bento-hero h2 { font-size: clamp(20px, 2.8vw, 27px); font-weight: 700; letter-spacing: -0.01em; color: var(--ink); line-height: 1.15; margin-bottom: 8px; }
+  .bento-hero p { font-size: clamp(12.5px, 1.4vw, 13.5px); color: var(--ink); max-width: 46ch; }
   .hero-stats { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .hero-stat {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.34);
     border-radius: var(--r-md);
     padding: 14px 12px;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16);
+    box-shadow: inset 0 0 0 1px rgba(45, 36, 36, 0.12);
   }
-  .hero-stat b { display: block; font-size: clamp(18px, 2.2vw, 22px); font-weight: 800; color: #fff; letter-spacing: -0.02em; line-height: 1.1; }
-  .hero-stat span { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.75); }
+  .hero-stat b { display: block; font-size: clamp(18px, 2.2vw, 22px); font-weight: 800; color: var(--ink); letter-spacing: -0.02em; line-height: 1.1; }
+  .hero-stat span { font-size: 10.5px; font-weight: 600; color: var(--ink); }
 
   .big-number-area { grid-column: span 8; }
   .big-number {
     font-size: clamp(56px, 9vw, 96px);
-    font-weight: 800; letter-spacing: -0.03em; line-height: 0.95;
+    font-weight: 700; letter-spacing: -0.02em; line-height: 0.95;
     color: var(--ink);
+    text-decoration: underline; text-decoration-color: var(--terracota);
+    text-decoration-thickness: 6px; text-underline-offset: 10px;
   }
-  .big-number em { font-style: normal; color: var(--primary); }
+  .big-number em { font-style: normal; color: inherit; }
   .number-caption { margin-top: 10px; color: var(--ink-soft); font-size: 14px; font-weight: 500; max-width: 40ch; }
   .number-foot { margin-top: 22px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 
@@ -383,10 +399,10 @@
 
   .chart-area { grid-column: span 8; }
   .chart svg { width: 100%; height: auto; display: block; }
-  .chart-line { fill: none; stroke: var(--primary); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .chart-line { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
   .chart-fill { fill: url(#gradFillPanel); }
   .chart-grid-h { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 5; }
-  .chart-dot { fill: var(--surface); stroke: var(--primary-deep); stroke-width: 2.5; transition: transform 220ms var(--ease-out); }
+  .chart-dot { fill: var(--surface); stroke: var(--ink); stroke-width: 2.5; transition: transform 220ms var(--ease-out); }
   .point:hover .chart-dot { transform: scale(1.35); }
   .legend { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
   .legend span { font-size: 11.5px; color: var(--ink-faint); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
@@ -394,7 +410,7 @@
 
   .mini-trend { grid-column: span 4; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
   .trend-row { display: flex; align-items: center; gap: 12px; }
-  .trend-rank { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; font-size: 12px; background: var(--primary-soft); color: var(--primary-deep); flex-shrink: 0; }
+  .trend-rank { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; font-size: 12px; background: var(--terracota); color: var(--ink); flex-shrink: 0; }
   .trend-row b { font-size: 13px; font-weight: 700; }
   .trend-row span { font-size: 11.5px; color: var(--ink-faint); }
   .trend-growth { margin-left: auto; font-weight: 800; font-size: 12px; color: var(--ok); }
@@ -404,17 +420,17 @@
     border-radius: var(--r-lg);
     padding: clamp(18px, 2.6vw, 24px);
     display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
-    background: linear-gradient(120deg, #FBF7EE 0%, #F6EFDF 100%);
-    box-shadow: inset 0 0 0 1px rgba(200,163,92,0.26);
+    background: linear-gradient(120deg, var(--nude-soft) 0%, var(--primary-soft) 100%);
+    box-shadow: inset 0 0 0 1px rgba(200, 125, 113, 0.26);
   }
   .band-icon {
     width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
     display: grid; place-items: center;
-    background: var(--gold-soft); box-shadow: inset 0 0 0 1px rgba(200,163,92,0.3);
+    background: var(--terracota); box-shadow: inset 0 0 0 1px rgba(45, 36, 36, 0.12);
   }
-  .band-icon svg { width: 21px; height: 21px; stroke-width: 1.6; color: var(--gold-deep); }
+  .band-icon svg { width: 21px; height: 21px; stroke-width: 1.6; color: var(--ink); }
   .band-title { font-size: 14px; font-weight: 800; line-height: 1.25; }
-  .band-text { font-size: 12.5px; color: var(--ink-soft); font-weight: 500; max-width: 54ch; }
+  .band-text { font-size: 12.5px; color: var(--ink); font-weight: 500; max-width: 54ch; }
   .band .btn { margin-left: auto; }
 
   /* ---------- VISTA PRODUCTOS ---------- */
@@ -443,7 +459,7 @@
   .stock-meter i.on { background: var(--amber); }
   .stock-meter i.no { background: var(--red); }
 
-  .price { font-weight: 700; }
+  .price { font-weight: 800; color: var(--ink); border-bottom: 2px solid var(--terracota); padding-bottom: 1px; }
   .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
   .row-btn {
     width: 30px; height: 30px; border-radius: 9px; border: 0; cursor: pointer;
@@ -453,7 +469,9 @@
     transition: color 200ms var(--ease-out), background-color 200ms var(--ease-out), transform 200ms var(--ease-out);
   }
   .row-btn svg { width: 14px; height: 14px; stroke-width: 1.8; }
-  .row-btn:hover { color: var(--primary); background: var(--primary-soft); }
+  @media (hover: hover) and (pointer: fine) {
+    .row-btn:hover { color: var(--ink); background: var(--terracota); }
+  }
   .row-btn:active { transform: scale(0.92); }
   .row-btn.warn:hover { color: var(--red); background: var(--red-soft); }
 
@@ -467,7 +485,7 @@
     transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out), transform 200ms var(--ease-out);
   }
   .pager button:active { transform: scale(0.92); }
-  .pager button.current { background: var(--primary); color: #fff; box-shadow: inset 0 0 0 1px var(--primary); }
+  .pager button.current { background: var(--terracota); color: var(--ink); box-shadow: inset 0 0 0 1px rgba(45, 36, 36, 0.12); }
 
   /* ---------- VISTA VENTAS ---------- */
   .sales-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 18px; align-items: start; }
@@ -479,19 +497,19 @@
     transition: transform 220ms var(--ease-out), box-shadow 240ms var(--ease-out), background-color 220ms var(--ease-out);
   }
   @media (hover: hover) and (pointer: fine) {
-    .cat-row:hover { background: var(--surface); box-shadow: inset 0 0 0 1px rgba(106,71,199,0.22), 0 14px 30px -20px rgba(87,52,176,0.4); transform: translateY(-1px); }
+    .cat-row:hover { background: var(--surface); box-shadow: inset 0 0 0 1px rgba(200,125,113,0.3), 0 14px 30px -20px rgba(200,125,113,0.45); transform: translateY(-1px); }
   }
   .cat-row .prod { flex: 1; min-width: 0; }
-  .cat-price { font-weight: 800; font-size: 13.5px; }
+  .cat-price { font-weight: 800; font-size: 13.5px; color: var(--ink); border-bottom: 2px solid var(--terracota); }
   .cat-stock { font-size: 11px; color: var(--ink-faint); font-weight: 600; display: block; text-align: right; }
   .add-btn {
     width: 32px; height: 32px; border-radius: 10px; border: 0; cursor: pointer;
-    display: grid; place-items: center; background: var(--primary); color: #fff;
-    box-shadow: 0 8px 18px -8px rgba(87,52,176,0.6);
+    display: grid; place-items: center; background: var(--terracota); color: var(--ink);
+    box-shadow: 0 8px 18px -8px rgba(200,125,113,0.65);
     transition: transform 200ms var(--ease-out), background-color 200ms var(--ease-out);
   }
   .add-btn svg { width: 15px; height: 15px; stroke-width: 2; }
-  .add-btn:hover { background: var(--primary-deep); }
+  .add-btn:hover { background: var(--primary-hover); }
   .add-btn:active { transform: scale(0.9); }
 
   .cart { position: sticky; top: 75px; }
@@ -506,7 +524,7 @@
   .qty button {
     width: 24px; height: 24px; border-radius: 8px; border: 0; cursor: pointer;
     display: grid; place-items: center; font-size: 14px; font-weight: 800;
-    background: var(--surface-soft); color: var(--primary-deep); box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--surface-soft); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line);
     transition: background-color 180ms var(--ease-out), transform 180ms var(--ease-out);
   }
   .qty button:active { transform: scale(0.88); }
@@ -517,7 +535,7 @@
   .cart-totals { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
   .t-line { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-soft); font-weight: 600; }
   .t-line.total { font-size: 18px; font-weight: 800; color: var(--ink); letter-spacing: -0.01em; padding-top: 10px; border-top: 1px solid var(--line); }
-  .t-line.total b { color: var(--primary-deep); }
+  .t-line.total b { color: var(--ink); border-bottom: 2px solid var(--terracota); padding-bottom: 1px; }
   .pay-btn { width: 100%; margin-top: 14px; }
   .pay-note { text-align: center; font-size: 11px; color: var(--ink-faint); font-weight: 500; margin-top: 10px; }
 
@@ -538,7 +556,7 @@
     transition: transform 220ms var(--ease-out), box-shadow 240ms var(--ease-out);
   }
   @media (hover: hover) and (pointer: fine) {
-    .alert-card:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px rgba(106,71,199,0.16), 0 18px 40px -24px rgba(87,52,176,0.35); }
+    .alert-card:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px rgba(200,125,113,0.24), 0 18px 40px -24px rgba(200,125,113,0.42); }
   }
   .alert-card.red { box-shadow: inset 0 0 0 1px rgba(192,74,74,0.22); }
   .alert-card.amber { box-shadow: inset 0 0 0 1px rgba(176,120,31,0.22); }
@@ -549,7 +567,7 @@
   .alert-icon svg { width: 18px; height: 18px; stroke-width: 1.7; }
   .alert-icon.red { background: var(--red-soft); color: var(--red); }
   .alert-icon.amber { background: var(--amber-soft); color: var(--amber); }
-  .alert-icon.gold { background: var(--gold-soft); color: var(--gold-deep); }
+  .alert-icon.nude { background: var(--nude); color: var(--ink); }
   .alert-card b { font-size: 13px; font-weight: 700; line-height: 1.3; display: block; }
   .alert-card .mini-sub { display: block; }
   .alert-card .pill { margin-left: auto; flex-shrink: 0; }
@@ -563,7 +581,7 @@
   .mini-kpi .tile-icon { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0; }
   .mini-kpi .tile-icon.red { background: var(--red-soft); color: var(--red); }
   .mini-kpi .tile-icon.amber { background: var(--amber-soft); color: var(--amber); }
-  .mini-kpi .tile-icon.gold { background: var(--gold-soft); color: var(--gold-deep); }
+  .mini-kpi .tile-icon.nude { background: var(--nude); color: var(--ink); }
   .mini-kpi .tile-icon svg { width: 17px; height: 17px; stroke-width: 1.7; }
   .mini-kpi b { display: block; font-size: 15px; font-weight: 800; }
   .mini-kpi span { font-size: 11.5px; color: var(--ink-faint); font-weight: 500; }
@@ -603,7 +621,7 @@
       position: fixed; inset: 57px auto 0 0; width: min(300px, 84vw); z-index: 80;
       transform: translateX(-105%);
       transition: transform 400ms var(--ease-exp);
-      box-shadow: 0 40px 80px -30px rgba(33,26,51,0.4);
+      box-shadow: 0 40px 80px -30px rgba(45,36,36,0.45);
     }
     .sidebar.open { transform: translateX(0); }
 
@@ -686,14 +704,14 @@
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2D2424" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3c1.8 2 2.6 4.1 2.6 6.2 0 2-.5 3.6-1.1 4.9h-3c-.6-1.3-1.1-2.9-1.1-4.9C9.4 7.1 10.2 5 12 3z" />
           <path d="M9.6 15h4.8l-.8 4.6a2 2 0 0 1-3.2 0L9.6 15z" />
           <path d="M10.2 11.4h3.6" />
         </svg>
       </div>
       <div>
-        <div class="brand-name">Belleza Clara</div>
+        <div class="brand-name">Familia de la Cruz</div>
         <div class="brand-tag">Gestión de inventario</div>
       </div>
     </div>
@@ -740,7 +758,7 @@
     <div class="side-card">
       <div class="side-card-title">Predicción de demanda</div>
       <div class="side-card-text">La IA analiza tus ventas y sugiere cuánto comprar cada semana.</div>
-      <a href="#" class="btn btn-sm" style="color:var(--primary-deep);font-size:12.5px;padding:0;">
+      <a href="#" class="btn btn-sm" style="color:var(--ink);font-size:12.5px;padding:0;">
         Ver para esta semana
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </a>
@@ -830,8 +848,8 @@
               <svg viewBox="0 0 320 150" role="img" aria-label="Gráfico de tendencia de ventas">
                 <defs>
                   <linearGradient id="gradFillPanel" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#6A47C7" stop-opacity="0.28" />
-                    <stop offset="100%" stop-color="#6A47C7" stop-opacity="0" />
+<stop offset="0%" stop-color="#C87D71" stop-opacity="0.3" />
+<stop offset="100%" stop-color="#C87D71" stop-opacity="0" />
                   </linearGradient>
                 </defs>
                 <line class="chart-grid-h" x1="12" y1="40" x2="308" y2="40" />
@@ -879,7 +897,7 @@
               <div class="band-title">Predicción de esta semana</div>
               <div class="band-text">Los productos más vendidos crecerán ~9% en 7 días. Revisa la sugerencia antes de ordenar al proveedor.</div>
             </div>
-            <a href="#" class="btn btn-gold">
+            <a href="#" class="btn btn-nude">
               Ver sugerencia
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
@@ -1159,7 +1177,7 @@
               <div class="t-line total"><span>Total</span><b>Q 209.00</b></div>
             </div>
 
-            <button class="btn btn-gold pay-btn">
+            <button class="btn btn-nude pay-btn">
               Registrar venta y cobrar
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>
@@ -1216,7 +1234,7 @@
           </div>
 
           <div class="alert-card amber reveal" style="--reveal-delay:80ms">
-            <div class="alert-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-5 4 3 5-7"/><path d="M20 5v3h-3"/></svg></div>
+            <div class="alert-icon nude"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-5 4 3 5-7"/><path d="M20 5v3h-3"/></svg></div>
             <div style="flex:1;min-width:0;">
               <b>Sugerencia de reabastecimiento lista</b>
               <span class="mini-sub">5 productos · total estimado Q 640.00</span>
@@ -1224,7 +1242,7 @@
                 <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.5-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>Basada en la predicción de demanda</span>
               </div>
             </div>
-            <span class="pill gold">IA · confianza alta</span>
+            <span class="pill nude">IA · confianza alta</span>
           </div>
 
           <div class="alert-group-title reveal">
@@ -1265,7 +1283,7 @@
                   <div><b>5</b><span>Por vencer (14 días)</span></div>
                 </div>
                 <div class="mini-kpi">
-                  <span class="tile-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-5 4 3 5-7"/><path d="M20 5v3h-3"/></svg></span>
+                  <span class="tile-icon nude"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-5 4 3 5-7"/><path d="M20 5v3h-3"/></svg></span>
                   <div><b>1</b><span>Sugerencia de compra</span></div>
                 </div>
               </div>

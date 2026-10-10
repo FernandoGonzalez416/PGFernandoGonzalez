@@ -33,6 +33,10 @@ Antes de modificar código:
 - Todo cambio debe mantener la coherencia con las reglas del proyecto.
 - Al terminar, verificar que no hayan quedado secretos, archivos temporales ni código sin usar.
 
+## Windows / codificación
+
+- **No escribir archivos con `Set-Content`/`Out-File` sin `-Encoding utf8`**; preferir las herramientas de edición (Write/Edit, que escriben UTF-8) y **verificar que los acentos queden bien**. En PowerShell 5.1, `Set-Content` usa la codificación ANSI por defecto y corrompe los caracteres acentuados a `?`/`�`.
+
 ## Git
 
 - **Solo commitear cuando el usuario lo pida explícitamente**; en ese caso revisar `git status`/`git diff`, preparar solo lo intencionado y nunca incluir secretos.

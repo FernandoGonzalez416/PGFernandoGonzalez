@@ -31,7 +31,7 @@ React.js es el único cliente en desarrollo en esta fase.
 
 - **Todo componente que consuma datos async** debe manejar explícitamente los cuatro estados: **cargando, error, vacío y éxito**. Nunca dejar una vista ni en blanco ni "colgada" sin feedback.
 - Manejar **estados de carga, error y vacíos** de forma explícita en cada vista.
-- **Consistencia visual** basada en las decisiones de diseño del proyecto (ver tesis, Cap. IV): paleta morado/blanco con acento dorado suave; ámbar para bajo stock y rojo para vencimiento próximo/agotado; tipografía sans-serif legible; interfaz intuitiva para personas sin formación técnica.
+- **Consistencia visual** basada en la identidad oficial del proyecto (P7 y `.opencode/rules/diseno.md`): paleta crema/nude/terracota/café de "Familia de la Cruz"; ámbar para bajo stock, rojo para vencimiento próximo/agotado y verde para disponible; títulos en Playfair Display y cuerpo en Montserrat; interfaz intuitiva para personas sin formación técnica.
 - Aplicar siempre las reglas de **diseño premium** (animaciones, micro-interacciones, jerarquía, layout, paleta, tipografía) de `.opencode/rules/diseno.md` y cargar las skills de diseño instaladas antes de tareas visuales.
 - La aplicación busca ser principalmente una **web de escritorio responsive**: prioridad de experiencia en computadora/escritorio y, como vista secundaria, en teléfono mediante navegador. **No copiar la navegación móvil** de la tesis (menú inferior, etc.); usar una estructura apropiada para aplicación web (P7).
 - El diseño debe ser **responsive** para funcionar correctamente desde un teléfono sin necesidad de instalar una aplicación.
