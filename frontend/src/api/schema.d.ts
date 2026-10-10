@@ -213,6 +213,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ventas/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Resumen De Ventas */
+        get: operations["resumen_de_ventas_api_ventas_resumen_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ventas/{venta_id}": {
         parameters: {
             query?: never;
@@ -832,6 +849,43 @@ export interface components {
             precio_habitual?: number | string | null;
             /** Activo */
             activo?: boolean | null;
+        };
+        /**
+         * ResumenVentaDia
+         * @description Un día del resumen de ventas, agrupado por fecha en hora de Guatemala.
+         */
+        ResumenVentaDia: {
+            /**
+             * Fecha
+             * Format: date
+             */
+            fecha: string;
+            /** Num Ventas */
+            num_ventas: number;
+            /** Total Vendido */
+            total_vendido: string;
+        };
+        /**
+         * ResumenVentas
+         * @description Respuesta de `GET /api/ventas/resumen` (panel del frontend).
+         */
+        ResumenVentas: {
+            /**
+             * Fecha Inicio
+             * Format: date
+             */
+            fecha_inicio: string;
+            /**
+             * Fecha Fin
+             * Format: date
+             */
+            fecha_fin: string;
+            /** Num Ventas */
+            num_ventas: number;
+            /** Total Vendido */
+            total_vendido: string;
+            /** Por Dia */
+            por_dia: components["schemas"]["ResumenVentaDia"][];
         };
         /** SugerenciaRead */
         SugerenciaRead: {
@@ -1525,6 +1579,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VentaRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resumen_de_ventas_api_ventas_resumen_get: {
+        parameters: {
+            query?: {
+                fecha_inicio?: string | null;
+                fecha_fin?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumenVentas"];
                 };
             };
             /** @description Validation Error */

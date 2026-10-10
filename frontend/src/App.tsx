@@ -1,94 +1,142 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+import { BrowserRouter, Route, Routes } from 'react-router'
 import { CAPACIDADES } from './api/capacidades'
 import { ProveedorAutenticacion } from './auth/AuthProvider'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { RequireCapacidad } from './auth/RequireCapacidad'
 import { AppLayout } from './components/layout/AppLayout'
 import { ToastProvider } from './components/ui/ToastProvider'
-import { Categorias } from './pages/Categorias'
-import { Inventario } from './pages/Inventario'
-import { Login } from './pages/Login'
+import { Suspense, lazy } from 'react'
+import ErrorBoundary from './components/ErrorBoundary'
 import { NoEncontrado } from './pages/NoEncontrado'
-import { Productos } from './pages/Productos'
-import { Proveedores } from './pages/Proveedores'
-import { VentaDetalle } from './pages/VentaDetalle'
-import { VentaNueva } from './pages/VentaNueva'
-import { VentaRecibo } from './pages/VentaRecibo'
-import { Ventas } from './pages/Ventas'
+import { Login } from './pages/Login'
+
+const Panel = lazy(() => import('./pages/Panel').then((m) => ({ default: m.Panel })))
+const Productos = lazy(() => import('./pages/Productos').then((m) => ({ default: m.Productos })))
+const Ventas = lazy(() => import('./pages/Ventas').then((m) => ({ default: m.Ventas })))
+const VentaDetalle = lazy(() => import('./pages/VentaDetalle').then((m) => ({ default: m.VentaDetalle })))
+const VentaNueva = lazy(() => import('./pages/VentaNueva').then((m) => ({ default: m.VentaNueva })))
+const VentaRecibo = lazy(() => import('./pages/VentaRecibo').then((m) => ({ default: m.VentaRecibo })))
+const Inventario = lazy(() => import('./pages/Inventario').then((m) => ({ default: m.Inventario })))
+const Categorias = lazy(() => import('./pages/Categorias').then((m) => ({ default: m.Categorias })))
+const Proveedores = lazy(() => import('./pages/Proveedores').then((m) => ({ default: m.Proveedores })))
+const Alertas = lazy(() => import('./pages/Alertas').then((m) => ({ default: m.Alertas })))
+const Reportes = lazy(() => import('./pages/Reportes').then((m) => ({ default: m.Reportes })))
+const Sugerencias = lazy(() => import('./pages/Sugerencias').then((m) => ({ default: m.Sugerencias })))
+const Notificaciones = lazy(() => import('./pages/Notificaciones').then((m) => ({ default: m.Notificaciones })))
+
+function Fallback() {
+  return <div className="pagina">Cargando...</div>
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <ToastProvider>
-        <ProveedorAutenticacion>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<Navigate to="/productos" replace />} />
-                <Route path="/productos" element={<Productos />} />
-                <Route
-                  path="/ventas/nueva"
-                  element={
-                    <RequireCapacidad capacidad={CAPACIDADES.ventasRegistrar}>
-                      <VentaNueva />
-                    </RequireCapacidad>
-                  }
-                />
-                <Route
-                  path="/ventas"
-                  element={
-                    <RequireCapacidad capacidad={CAPACIDADES.stockConsultar}>
-                      <Ventas />
-                    </RequireCapacidad>
-                  }
-                />
-                <Route
-                  path="/ventas/:id"
-                  element={
-                    <RequireCapacidad capacidad={CAPACIDADES.stockConsultar}>
-                      <VentaDetalle />
-                    </RequireCapacidad>
-                  }
-                />
-                <Route
-                  path="/ventas/:id/recibo"
-                  element={
-                    <RequireCapacidad capacidad={CAPACIDADES.stockConsultar}>
-                      <VentaRecibo />
-                    </RequireCapacidad>
-                  }
-                />
-                <Route
-                  path="/inventario"
-                  element={
-                    <RequireCapacidad capacidad={CAPACIDADES.stockConsultar}>
-                      <Inventario />
-                    </RequireCapacidad>
-                  }
-                />
-                <Route
-                  path="/categorias"
-                  element={
-                    <RequireCapacidad capacidad={CAPACIDADES.categoriasGestionar}>
-                      <Categorias />
-                    </RequireCapacidad>
-                  }
-                />
-                <Route
-                  path="/proveedores"
-                  element={
-                    <RequireCapacidad capacidad={CAPACIDADES.proveedoresGestionar}>
-                      <Proveedores />
-                    </RequireCapacidad>
-                  }
-                />
-                <Route path="*" element={<NoEncontrado />} />
-              </Route>
-            </Route>
-          </Routes>
-        </ProveedorAutenticacion>
-      </ToastProvider>
+      <ErrorBoundary>
+        <ToastProvider>
+          <ProveedorAutenticacion>
+            <Suspense fallback={<Fallback />}>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<AppLayout />}>
+                    <Route path="/" element={<Panel />} />
+                    <Route path="/productos" element={<Productos />} />
+                    <Route
+                      path="/ventas/nueva"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.ventasRegistrar}>
+                          <VentaNueva />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route
+                      path="/ventas"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.stockConsultar}>
+                          <Ventas />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route
+                      path="/ventas/:id"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.stockConsultar}>
+                          <VentaDetalle />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route
+                      path="/ventas/:id/recibo"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.stockConsultar}>
+                          <VentaRecibo />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route
+                      path="/inventario"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.stockConsultar}>
+                          <Inventario />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route
+                      path="/categorias"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.categoriasGestionar}>
+                          <Categorias />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route
+                      path="/proveedores"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.proveedoresGestionar}>
+                          <Proveedores />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route
+                      path="/alertas"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.alertasVer}>
+                          <Alertas />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route
+                      path="/reportes"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.reportesVer}>
+                          <Reportes />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route
+                      path="/sugerencias"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.sugerenciasVer}>
+                          <Sugerencias />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route
+                      path="/notificaciones"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.alertasVer}>
+                          <Notificaciones />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route path="*" element={<NoEncontrado />} />
+                  </Route>
+                </Route>
+              </Routes>
+            </Suspense>
+          </ProveedorAutenticacion>
+        </ToastProvider>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }

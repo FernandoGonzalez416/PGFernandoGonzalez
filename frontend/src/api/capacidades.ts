@@ -8,4 +8,9 @@ export const CAPACIDADES = {
   ventasAnular: 'ventas:anular',
   inventarioAjustar: 'inventario:ajustar',
   inventarioVerMovimientos: 'inventario:ver_movimientos',
+  alertasVer: 'alertas:ver',
+  reportesVer: 'reportes:ver',
+  prediccionVer: 'prediccion:ver',
+  sugerenciasVer: 'sugerencias:ver',
+  sugerenciasAtender: 'sugerencias:atender',
 } as const

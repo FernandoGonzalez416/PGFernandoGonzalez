@@ -11,29 +11,38 @@ const DURACION_MS: Record<NivelToast, number> = {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
-  const siguienteId = useRef(0)
+  const idActual = useRef(0)
 
   const descartar = useCallback((id: number) => {
-    setToasts((actuales) => actuales.filter((toast) => toast.id !== id))
+    setToasts((actuales) => actuales.filter((t) => t.id !== id))
   }, [])
 
   const notificar = useCallback<Notificar>(
     (mensaje, nivel = 'info') => {
-      const id = siguienteId.current++
+      const id = ++idActual.current
       setToasts((actuales) => [...actuales, { id, mensaje, nivel }])
-      window.setTimeout(() => descartar(id), DURACION_MS[nivel])
+      const timeout = setTimeout(() => descartar(id), DURACION_MS[nivel])
+      return () => clearTimeout(timeout)
     },
     [descartar],
   )
 
-  const valor = useMemo<ContextoToastValor>(() => ({ notificar }), [notificar])
+  const valor = useMemo<ContextoToastValor>(
+    () => ({
+      notificar,
+      exito: (mensaje: string) => notificar(mensaje, 'ok'),
+      error: (mensaje: string) => notificar(mensaje, 'error'),
+      info: (mensaje: string) => notificar(mensaje, 'info'),
+    }),
+    [notificar],
+  )
 
   return (
     <ContextoToast.Provider value={valor}>
       {children}
-      <div className="toast-stack" role="region" aria-live="polite" aria-label="Notificaciones">
+      <div className="toast-contenedor" aria-live="polite" aria-label="Notificaciones">
         {toasts.map((toast) => (
-          <div key={toast.id} className={`toast toast-${toast.nivel}`} role="status">
+          <div key={toast.id} className={`toast toast-${toast.nivel}`}>
             <p>{toast.mensaje}</p>
             <button
               type="button"
@@ -49,3 +58,5 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     </ContextoToast.Provider>
   )
 }
+
+export { useToast } from './useToast'

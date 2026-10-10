@@ -1,5 +1,5 @@
 import { apiFetch } from '../api/client'
-import type { AnulacionCreate, VentaCreate, VentaRead } from '../api/types'
+import type { AnulacionCreate, ResumenVentas, VentaCreate, VentaRead } from '../api/types'
 import { construirConsulta } from './consulta'
 
 export type FiltrosVentas = {
@@ -13,6 +13,14 @@ export function listarVentas(filtros: FiltrosVentas = {}): Promise<VentaRead[]> 
     desplazamiento: filtros.desplazamiento,
   })
   return apiFetch<VentaRead[]>(`/api/ventas${consulta}`)
+}
+
+export function obtenerResumenVentas(filtros: { fechaInicio?: string; fechaFin?: string } = {}): Promise<ResumenVentas> {
+  const consulta = construirConsulta({
+    fecha_inicio: filtros.fechaInicio,
+    fecha_fin: filtros.fechaFin,
+  })
+  return apiFetch<ResumenVentas>(`/api/ventas/resumen${consulta}`)
 }
 
 export function obtenerVenta(ventaId: string): Promise<VentaRead> {

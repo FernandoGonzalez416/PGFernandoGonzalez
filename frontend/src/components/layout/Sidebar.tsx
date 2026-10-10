@@ -12,8 +12,17 @@ export function Sidebar({ abierto, onNavegar }: { abierto: boolean; onNavegar: (
   const puedeProveedores = useCan(CAPACIDADES.proveedoresGestionar)
   const puedeVentasRegistrar = useCan(CAPACIDADES.ventasRegistrar)
   const puedeStockConsultar = useCan(CAPACIDADES.stockConsultar)
+  const puedeAlertas = useCan(CAPACIDADES.alertasVer)
+  const puedeReportes = useCan(CAPACIDADES.reportesVer)
+  const puedeSugerencias = useCan(CAPACIDADES.sugerenciasVer)
 
   const grupos: { etiqueta: string; items: ItemNav[] }[] = [
+    {
+      etiqueta: 'Inicio',
+      items: [
+        { to: '/', etiqueta: 'Panel', visible: true, end: true },
+      ],
+    },
     {
       etiqueta: 'Catálogo',
       items: [
@@ -32,6 +41,15 @@ export function Sidebar({ abierto, onNavegar }: { abierto: boolean; onNavegar: (
     {
       etiqueta: 'Inventario',
       items: [{ to: '/inventario', etiqueta: 'Inventario', visible: puedeStockConsultar }],
+    },
+    {
+      etiqueta: 'Análisis',
+      items: [
+        { to: '/alertas', etiqueta: 'Alertas', visible: puedeAlertas },
+        { to: '/reportes', etiqueta: 'Reportes', visible: puedeReportes },
+        { to: '/sugerencias', etiqueta: 'Sugerencias de compra', visible: puedeSugerencias },
+        { to: '/notificaciones', etiqueta: 'Notificaciones', visible: puedeAlertas },
+      ],
     },
   ]
     .map((grupo) => ({
