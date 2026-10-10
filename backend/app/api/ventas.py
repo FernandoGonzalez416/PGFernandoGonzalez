@@ -1,14 +1,20 @@
 from typing import Annotated
+from datetime import date, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.capacidades import Capacidad
 from app.core.db import get_db_session
 from app.core.permissions import requiere
 from app.core.security import UsuarioAutenticado
-from app.schemas.venta import AnulacionCreate, VentaCreate, VentaRead
+from app.schemas.venta import (
+    AnulacionCreate,
+    ResumenVentas,
+    VentaCreate,
+    VentaRead,
+)
 from app.services import ventas as servicio
 
 router = APIRouter()
@@ -26,6 +32,24 @@ async def listar_ventas(
     return await servicio.listar_ventas(
         sesion, limite=limite, desplazamiento=desplazamiento
     )
+
+
+@router.get("/resumen", response_model=ResumenVentas)
+async def resumen_de_ventas(
+    sesion: Session,
+    _: Annotated[UsuarioAutenticado, Depends(requiere(Capacidad.STOCK_CONSULTAR))],
+    fecha_inicio: date | None = Query(default=None),
+    fecha_fin: date | None = Query(default=None),
+) -> ResumenVentas:
+    hoy = date.today()
+    f_fin = fecha_fin if fecha_fin is not None else hoy
+    f_ini = fecha_inicio if fecha_inicio is not None else hoy - timedelta(days=6)
+    if f_fin < f_ini:
+        raise HTTPException(
+            status_code=422,
+            detail="fecha_fin no puede ser menor que fecha_inicio",
+        )
+    return await servicio.resumen_ventas(sesion, f_ini, f_fin)
 
 
 @router.get("/{venta_id}", response_model=VentaRead)

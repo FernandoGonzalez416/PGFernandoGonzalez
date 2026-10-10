@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 from uuid import UUID
@@ -75,3 +75,21 @@ class VentaRead(BaseModel):
     estado: str
     motivo_anulacion: str | None
     lineas: list[VentaDetalleRead]
+
+
+class ResumenVentaDia(BaseModel):
+    """Un día del resumen de ventas, agrupado por fecha en hora de Guatemala."""
+
+    fecha: date
+    num_ventas: int
+    total_vendido: Decimal
+
+
+class ResumenVentas(BaseModel):
+    """Respuesta de `GET /api/ventas/resumen` (panel del frontend)."""
+
+    fecha_inicio: date
+    fecha_fin: date
+    num_ventas: int
+    total_vendido: Decimal
+    por_dia: list[ResumenVentaDia]

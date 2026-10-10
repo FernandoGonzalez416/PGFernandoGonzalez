@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
@@ -14,7 +15,14 @@ from app.core.errores import (
     VentaNoAnulableError,
     VentaNoEncontradaError,
 )
-from app.schemas.venta import AnulacionCreate, VentaCreate, VentaDetalleRead, VentaRead
+from app.schemas.venta import (
+    AnulacionCreate,
+    ResumenVentaDia,
+    ResumenVentas,
+    VentaCreate,
+    VentaDetalleRead,
+    VentaRead,
+)
 from app.services.folio import generar_folio
 from app.services.productos import obtener_almacen_por_defecto, obtener_producto
 
@@ -367,3 +375,54 @@ async def listar_ventas(
     return [
         VentaRead(**dict(fila), lineas=por_venta.get(fila["id"], [])) for fila in filas
     ]
+
+
+async def resumen_ventas(
+    sesion: AsyncSession, fecha_inicio: date, fecha_fin: date
+) -> ResumenVentas:
+    """Ventas por día (hora de Guatemala) entre dos fechas, con días en 0.
+
+    Solo cuenta ventas con `estado = 'activa'`. `generate_series` rellena los
+    días sin ventas con 0 para que el gráfico del panel no tenga huecos.
+    """
+    filas = (
+        await sesion.execute(
+            text(
+                """
+                WITH dias AS (
+                    SELECT generate_series(
+                        CAST(:fecha_inicio AS date),
+                        CAST(:fecha_fin AS date),
+                        interval '1 day'
+                    )::date AS dia
+                ),
+                agrupado AS (
+                    SELECT (v.fecha AT TIME ZONE 'America/Guatemala')::date AS dia,
+                           COUNT(*) AS num_ventas,
+                           SUM(v.total) AS total_vendido
+                    FROM venta v
+                    WHERE v.estado = 'activa'
+                      AND (v.fecha AT TIME ZONE 'America/Guatemala')::date
+                          BETWEEN CAST(:fecha_inicio AS date) AND CAST(:fecha_fin AS date)
+                    GROUP BY 1
+                )
+                SELECT d.dia AS fecha,
+                       COALESCE(a.num_ventas, 0) AS num_ventas,
+                       COALESCE(a.total_vendido, 0)::numeric(12,2) AS total_vendido
+                FROM dias d
+                LEFT JOIN agrupado a ON a.dia = d.dia
+                ORDER BY d.dia
+                """
+            ),
+            {"fecha_inicio": fecha_inicio, "fecha_fin": fecha_fin},
+        )
+    ).mappings().all()
+
+    por_dia = [ResumenVentaDia(**dict(fila)) for fila in filas]
+    return ResumenVentas(
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        num_ventas=sum(dia.num_ventas for dia in por_dia),
+        total_vendido=a_cuantia(sum((dia.total_vendido for dia in por_dia), Decimal("0.00"))),
+        por_dia=por_dia,
+    )
