@@ -7,6 +7,8 @@ import numpy as np
 from sklearn.metrics import mean_absolute_error
 
 from .modelos import crear_modelos, nombre_metodo_clave_a_bd
+from .features import WARMUP_DIAS
+from .recursivo import HORIZONTE, pronosticar_recursivo
 
 
 # Umbrales configurables (P13)
@@ -79,10 +81,15 @@ def evaluar_por_bloques_recursivos(
     serie_hist_completa: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Evaluación por bloques de 7 días con procedimiento recursivo.
+    Evaluación por bloques de 7 días con EL MISMO procedimiento recursivo de producción.
 
-    Simula cómo opera el pronóstico real: reentrena con datos hasta t-1
-    y pronostica 7 días, luego avanza 7 días y repite.
+    Para cada bloque: entrena SOLO con filas anteriores al inicio del bloque,
+    pronostica los 7 días de forma recursiva desde ese origen (cada predicción
+    alimenta lags/medias del día siguiente; nunca se usan los valores reales
+    del bloque) y compara con lo real.
+
+    Las filas X/y están alineadas 1:1 con la serie desde WARMUP_DIAS, así que
+    el origen del bloque en la serie es WARMUP_DIAS + filas de entrenamiento.
 
     Para validación de 14 días = 2 bloques de 7 días.
 
@@ -91,22 +98,28 @@ def evaluar_por_bloques_recursivos(
         y_real_bloques: valores reales correspondientes
     """
     n_val = len(y_val)
-    if n_val != VALIDACION_DIAS:
-        # Si no son exactamente 14 días, evaluación simple
+    if n_val != VALIDACION_DIAS or len(serie_hist_completa) == 0:
+        # Sin los 14 días exactos o sin serie: evaluación simple de un paso
         modelo.fit(X_train, y_train)
         return modelo.predict(X_val), y_val
 
-    # Bloque 1: días 0-6 de validación
-    modelo.fit(X_train, y_train)
-    pred_bloque1 = modelo.predict(X_val[:7])
+    # Origen del bloque 1 en coordenadas de la serie completa
+    origen_serie_b1 = WARMUP_DIAS + len(X_train)
 
-    # Bloque 2: días 7-13 de validación
-    X_train_b2 = np.vstack([X_train, X_val[:7]])
-    y_train_b2 = np.concatenate([y_train, y_val[:7]])
-    modelo.fit(X_train_b2, y_train_b2)
-    pred_bloque2 = modelo.predict(X_val[7:14])
+    pronosticos = []
+    X_acum, y_acum = X_train, y_train
+    for b in range(VALIDACION_DIAS // HORIZONTE):
+        inicio = b * HORIZONTE
+        origen = origen_serie_b1 + inicio
+        modelo.fit(X_acum, y_acum)
+        pred_bloque = pronosticar_recursivo(
+            modelo, X_val[inicio], serie_hist_completa[:origen], HORIZONTE
+        )
+        pronosticos.append(pred_bloque)
+        X_acum = np.vstack([X_acum, X_val[inicio : inicio + HORIZONTE]])
+        y_acum = np.concatenate([y_acum, y_val[inicio : inicio + HORIZONTE]])
 
-    y_pred = np.concatenate([pred_bloque1, pred_bloque2])
+    y_pred = np.concatenate(pronosticos)
     return y_pred, y_val
 
 
@@ -150,6 +163,8 @@ def evaluar_modelos(
     Evalúa todos los candidatos contra la línea base y selecciona el mejor.
 
     División temporal: últimos 14 días = validación, resto = entrenamiento.
+    Cada bloque de 7 días se pronostica de forma recursiva con el mismo
+    procedimiento de producción (sin usar valores reales del bloque).
     """
     n = len(y)
     idx_val_inicio = n - VALIDACION_DIAS
@@ -202,7 +217,12 @@ def evaluar_modelos(
             mejor_clave = clave
             mejor_metricas = MetricasValidacion(mae, wape, nmae, dias_venta_val, float(np.mean(y_val)))
 
-    y_pred_base = pronosticar_promedio_movil_7(serie_completa[:idx_serie_val], VALIDACION_DIAS)
+    # Línea base por bloque: media móvil plana de 7 días tomada en cada origen
+    base_b1 = pronosticar_promedio_movil_7(serie_completa[:idx_serie_val], HORIZONTE)
+    base_b2 = pronosticar_promedio_movil_7(
+        serie_completa[: idx_serie_val + HORIZONTE], HORIZONTE
+    )
+    y_pred_base = np.concatenate([base_b1, base_b2])
     mae_base, wape_base, nmae_base = calcular_metricas(y_val, y_pred_base)
     metricas_base = MetricasValidacion(mae_base, wape_base, nmae_base, dias_venta_val, float(np.mean(y_val)))
 

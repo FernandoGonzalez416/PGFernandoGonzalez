@@ -208,22 +208,101 @@ def test_intervalo_aproximado():
 
 
 def test_evaluacion_por_bloques_recursivos():
-    """Verifica que la evaluación por bloques de 7 días funciona."""
+    """Verifica la evaluación por bloques de 7 días con la serie real."""
+    from datetime import date, timedelta
+
     from app.ml.evaluacion import evaluar_por_bloques_recursivos
-    from sklearn.linear_model import LinearRegression
 
     np.random.seed(42)
-    X = np.random.randn(50, 8)
-    y = X[:, 0] * 2 + X[:, 1] * 0.5 + np.random.randn(50) * 0.1
-    X_train, X_val = X[:36], X[36:]
-    y_train, y_val = y[:36], y[36:]
+    base = np.array([5, 5, 5, 5, 5, 10, 2] * 15, dtype=np.float64)
+    serie = np.maximum(base + np.random.normal(0, 0.5, len(base)), 0)
+    fechas = [date(2024, 1, 1) + timedelta(days=i) for i in range(len(serie))]
 
-    modelo = LinearRegression()
-    y_pred, y_real = evaluar_por_bloques_recursivos(modelo, X_train, y_train, X_val, y_val, np.array([]))
+    X, y, _ = construir_features(serie, fechas)
+    n = len(y)
+    X_train, X_val = X[: n - 14], X[n - 14 :]
+    y_train, y_val = y[: n - 14], y[n - 14 :]
+
+    modelo = crear_modelos()["random_forest"]
+    y_pred, y_real = evaluar_por_bloques_recursivos(
+        modelo, X_train, y_train, X_val, y_val, serie
+    )
 
     assert len(y_pred) == 14  # 2 bloques de 7
     assert len(y_real) == 14
     assert np.array_equal(y_real, y_val)
+    assert np.all(np.isfinite(y_pred))
+    # Determinista salvo ruido de punto flotante (RandomForest usa n_jobs=-1):
+    # dos corridas dan lo mismo
+    modelo2 = crear_modelos()["random_forest"]
+    y_pred2, _ = evaluar_por_bloques_recursivos(
+        modelo2, X_train, y_train, X_val, y_val, serie
+    )
+    assert np.allclose(y_pred, y_pred2)
+
+
+def test_bloques_sin_fuga_dentro_del_bloque():
+    """Cambiar los valores reales DENTRO del bloque no altera su pronóstico."""
+    from datetime import date, timedelta
+
+    from app.ml.evaluacion import evaluar_por_bloques_recursivos
+
+    np.random.seed(42)
+    base = np.array([5, 5, 5, 5, 5, 10, 2] * 15, dtype=np.float64)
+    serie_a = np.maximum(base + np.random.normal(0, 0.5, len(base)), 0)
+    fechas = [date(2024, 1, 1) + timedelta(days=i) for i in range(len(serie_a))]
+
+    X_a, y_a, _ = construir_features(serie_a, fechas)
+    n = len(y_a)
+    X_train, X_val_a = X_a[: n - 14], X_a[n - 14 :]
+    y_train, y_val_a = y_a[: n - 14], y_a[n - 14 :]
+
+    # Escenario B: mismos datos hasta el origen del bloque 1, +50 dentro del bloque
+    origen_serie = WARMUP_DIAS + len(X_train)
+    serie_b = serie_a.copy()
+    serie_b[origen_serie : origen_serie + 7] += 50.0
+    X_b, y_b, _ = construir_features(serie_b, fechas)
+    X_val_b, y_val_b = X_b[n - 14 :], y_b[n - 14 :]
+
+    pred_a, _ = evaluar_por_bloques_recursivos(
+        crear_modelos()["random_forest"], X_train, y_train, X_val_a, y_val_a, serie_a
+    )
+    pred_b, _ = evaluar_por_bloques_recursivos(
+        crear_modelos()["random_forest"], X_train, y_train, X_val_b, y_val_b, serie_b
+    )
+
+    assert np.allclose(pred_a[:7], pred_b[:7])
+
+
+def test_bloque_usa_funcion_recursiva_compartida():
+    """El pronóstico del bloque 1 es idéntico al de la función compartida."""
+    from datetime import date, timedelta
+
+    from app.ml.evaluacion import evaluar_por_bloques_recursivos
+    from app.ml.recursivo import pronosticar_recursivo
+
+    np.random.seed(42)
+    base = np.array([5, 5, 5, 5, 5, 10, 2] * 15, dtype=np.float64)
+    serie = np.maximum(base + np.random.normal(0, 0.5, len(base)), 0)
+    fechas = [date(2024, 1, 1) + timedelta(days=i) for i in range(len(serie))]
+
+    X, y, _ = construir_features(serie, fechas)
+    n = len(y)
+    X_train, X_val = X[: n - 14], X[n - 14 :]
+    y_train, y_val = y[: n - 14], y[n - 14 :]
+    origen_serie = WARMUP_DIAS + len(X_train)
+
+    pred_bloques, _ = evaluar_por_bloques_recursivos(
+        crear_modelos()["random_forest"], X_train, y_train, X_val, y_val, serie
+    )
+
+    modelo_directo = crear_modelos()["random_forest"]
+    modelo_directo.fit(X_train, y_train)
+    pred_directo = pronosticar_recursivo(
+        modelo_directo, X_val[0], serie[:origen_serie]
+    )
+
+    assert np.allclose(pred_bloques[:7], pred_directo)
 
 
 def test_pronostico_recursivo_no_colapsa_a_ultimo_valor():
