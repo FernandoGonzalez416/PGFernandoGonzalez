@@ -226,5 +226,32 @@ def test_evaluacion_por_bloques_recursivos():
     assert np.array_equal(y_real, y_val)
 
 
+def test_pronostico_recursivo_no_colapsa_a_ultimo_valor():
+    """Regresión M1: pronosticar_recursivo usa el modelo entrenado, sin reajuste.
+
+    Reajustar con una sola muestra colapsaba los árboles a una hoja y el
+    pronóstico salía plano (= último valor): 11 productos con demanda 0.00
+    aunque tenían ventas recientes.
+    """
+    from datetime import date, timedelta
+
+    from app.ml.pronostico import pronosticar_recursivo
+
+    np.random.seed(42)
+    base = np.array([5, 5, 5, 5, 5, 10, 2] * 15, dtype=np.float64)
+    serie = np.maximum(base + np.random.normal(0, 0.5, len(base)), 0)
+    fechas = [date(2024, 1, 1) + timedelta(days=i) for i in range(len(serie))]
+
+    X, y, _ = construir_features(serie, fechas)
+    modelo = crear_modelos()["random_forest"]
+    modelo.fit(X, y)
+
+    pronostico = pronosticar_recursivo(modelo, X[-1], serie)
+
+    assert len(pronostico) == 7
+    assert np.all(pronostico >= 0)
+    assert not np.allclose(pronostico, serie[-1])
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

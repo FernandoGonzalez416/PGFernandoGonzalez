@@ -1,7 +1,6 @@
 """Pronóstico recursivo a 7 días y intervalo aproximado."""
 
 import numpy as np
-from sklearn.base import clone
 
 from .modelos import crear_modelos, nombre_metodo_clave_a_bd
 from .evaluacion import ResultadoEvaluacion, MetricasValidacion
@@ -24,10 +23,9 @@ def pronosticar_recursivo(
     X_ultimo: features del último día conocido (shape: (1, n_features))
     serie_hist: serie histórica completa de unidades (para calcular lags/medias iniciales)
     """
-    # Clonar modelo para no modificar el original
-    modelo = clone(modelo)
-    modelo.fit(X_ultimo.reshape(1, -1) if X_ultimo.ndim == 1 else X_ultimo, 
-               serie_hist[-1:] if len(serie_hist) > 0 else np.array([0.0]))
+    # El modelo llega ya entrenado (generar_pronostico_completo lo ajusta con
+    # todos los datos). NO reajustarlo aquí: ajustarlo con una sola muestra
+    # colapsa los árboles a una hoja y el pronóstico sale plano (= último valor).
 
     # Para el pronóstico recursivo, necesitamos simular la evolución de features
     # Simplificación: usamos el último estado conocido y actualizamos lags/medias
@@ -77,11 +75,8 @@ def pronosticar_recursivo(
             features_actual[6] = float(np.mean(historial_ventanas))
             features_actual[7] = float(np.std(historial_ventanas, ddof=0))
 
-        # Re-entrenar modelo con dato nuevo (simplificado: solo agregamos al historial)
-        # En producción se reentrenaría completo; aquí actualizamos incrementalmente
-        # Para Random Forest no hay partial_fit, así que reentrenamos con todo
-        # Como es costoso, en esta versión simplificada solo actualizamos features
-        # y usamos el modelo ya entrenado
+        # El modelo NO se reentrena dentro del horizonte: se usa el ya entrenado
+        # y solo se actualizan las features (lags, medias) con cada predicción.
 
     return np.array(predicciones)
 
