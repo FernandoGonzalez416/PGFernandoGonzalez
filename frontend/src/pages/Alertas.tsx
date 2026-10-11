@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
+import { Eye, RotateCcw } from 'lucide-react'
 import { Link } from 'react-router'
 import { CAPACIDADES } from '../api/capacidades'
 import { RequireCapacidad } from '../auth/RequireCapacidad'
 import { EstadoConsulta } from '../components/panel/EstadoConsulta'
+import { Button } from '../components/ui/Button'
 import { useAlertas } from '../hooks/useAlertas'
 import { formatCantidad, formatFecha } from '../lib/format'
 import type { AlertaStockBajo, AlertaVencimientoProximo } from '../api/types'
@@ -78,7 +80,7 @@ export function Alertas() {
             {fila.tipo === 'proximo' && <>Vence: {formatFecha(fila.fecha_vencimiento)} · Faltan {formatCantidad(fila.dias_restantes)} días</>}
           </td>
           <td data-label="Ver">
-            <Link to="/productos" className="btn btn-ghost btn-sm">Ver producto</Link>
+            <Link to="/productos" className="btn btn-ghost btn-sm"><span className="btn-icono" aria-hidden="true"><Eye /></span> Ver producto</Link>
           </td>
         </tr>
       ))}
@@ -95,9 +97,13 @@ return (
           <p className="page-subtitle">Stock bajo, productos agotados y vencimientos próximos o vencidos.</p>
         </div>
         <div className="page-header-acciones">
-          <button type="button" className="btn btn-ghost" onClick={recargar}>
+          <Button
+            variante="ghost"
+            iconoIzquierdo={<RotateCcw aria-hidden="true" />}
+            onClick={recargar}
+          >
             Actualizar
-          </button>
+          </Button>
         </div>
       </div>
       <section className="card">

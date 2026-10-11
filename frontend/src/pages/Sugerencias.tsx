@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { Check, ChevronLeft, ChevronRight, Sparkles, X } from 'lucide-react'
 import { CAPACIDADES } from '../api/capacidades'
 import { RequireCapacidad } from '../auth/RequireCapacidad'
 import { EstadoConsulta } from '../components/panel/EstadoConsulta'
+import { Button } from '../components/ui/Button'
 import { useSugerencias, type FiltroEstado } from '../hooks/useSugerencias'
 import { useCan } from '../auth/useCan'
 import { actualizarSugerencia, generarSugerencias } from '../services/sugerencias'
@@ -106,7 +108,7 @@ export function Sugerencias() {
                     onClick={() => handleAccion(s, 'atendida')}
                     disabled={procesando === s.id}
                   >
-                    Atender
+                    <span className="btn-icono" aria-hidden="true"><Check /></span> Atender
                   </button>
                   <button
                     type="button"
@@ -114,7 +116,7 @@ export function Sugerencias() {
                     onClick={() => handleAccion(s, 'descartada')}
                     disabled={procesando === s.id}
                   >
-                    Descartar
+                    <span className="btn-icono" aria-hidden="true"><X /></span> Descartar
                   </button>
                 </>
               ) : (
@@ -128,14 +130,14 @@ export function Sugerencias() {
   )
 
   const botonGenerar = puedeGenerar ? (
-    <button
-      type="button"
-      className="btn btn-primary"
+    <Button
+      variante="primary"
+      iconoIzquierdo={<Sparkles aria-hidden="true" />}
+      cargando={generando}
       onClick={handleGenerar}
-      disabled={generando}
     >
-      {generando ? 'Generando...' : 'Generar sugerencias'}
-    </button>
+      Generar sugerencias
+    </Button>
   ) : null
 
   return (
@@ -187,7 +189,7 @@ export function Sugerencias() {
               onClick={irAnterior}
               disabled={pagina === 0}
             >
-              Anterior
+              <span className="btn-icono" aria-hidden="true"><ChevronLeft /></span> Anterior
             </button>
             <span>Página {pagina + 1}</span>
             <button
@@ -196,7 +198,7 @@ export function Sugerencias() {
               onClick={irSiguiente}
               disabled={!hayMas}
             >
-              Siguiente
+              Siguiente <span className="btn-icono" aria-hidden="true"><ChevronRight /></span>
             </button>
           </div>
         </section>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { ChevronLeft, ChevronRight, CircleAlert, PackagePlus, Plus } from 'lucide-react'
 import { useVentas } from '../hooks/useVentas'
 import { formatFecha, formatQ } from '../lib/format'
 import { PillEstadoVenta } from '../components/ventas/EstadoVenta'
@@ -16,7 +17,7 @@ export function Ventas() {
         </div>
         <div className="page-actions">
           <Link to="/ventas/nueva" className="btn btn-primary">
-            Nueva venta
+            <span className="btn-icono" aria-hidden="true"><Plus /></span> Nueva venta
           </Link>
         </div>
       </div>
@@ -32,7 +33,7 @@ export function Ventas() {
 
         {!cargando && error !== null && (
           <div className="empty">
-            <span className="empty-icon" aria-hidden="true">!</span>
+            <span className="empty-icon empty-icon-lucide" aria-hidden="true"><CircleAlert /></span>
             <h3>No se pudieron cargar las ventas</h3>
             <p>{error}</p>
             <button type="button" className="btn btn-ghost" onClick={() => void recargar()}>
@@ -43,7 +44,7 @@ export function Ventas() {
 
         {!cargando && error === null && ventas.length === 0 && (
           <div className="empty tabla-vacia">
-            <span className="empty-icon" aria-hidden="true">＋</span>
+            <span className="empty-icon empty-icon-lucide" aria-hidden="true"><PackagePlus /></span>
             <h3>No hay ventas que mostrar</h3>
             <p>
               {pagina > 0
@@ -100,7 +101,7 @@ export function Ventas() {
           disabled={pagina === 0 || cargando}
           onClick={irAnterior}
         >
-          Anterior
+          <span className="btn-icono" aria-hidden="true"><ChevronLeft /></span> Anterior
         </button>
         <span className="paginacion-indice">Página {pagina + 1}</span>
         <button
@@ -109,7 +110,7 @@ export function Ventas() {
           disabled={!hayMas || cargando}
           onClick={irSiguiente}
         >
-          Siguiente
+          Siguiente <span className="btn-icono" aria-hidden="true"><ChevronRight /></span>
         </button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { X } from 'lucide-react'
 
 export function Dialogo({
   abierto,
@@ -36,7 +37,7 @@ export function Dialogo({
       <div className="dialog-head">
         <h2>{titulo}</h2>
         <button type="button" className="icon-btn" aria-label="Cerrar" onClick={onCerrar}>
-          ×
+          <X aria-hidden="true" />
         </button>
       </div>
       <div className="dialog-body">{children}</div>

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
+import { RefreshCw, TriangleAlert, X } from 'lucide-react'
 import { CAPACIDADES } from '../api/capacidades'
 import { RequireCapacidad } from '../auth/RequireCapacidad'
 import { EstadoConsulta } from '../components/panel/EstadoConsulta'
 import { usePredicciones, useSeriePrediccion } from '../hooks/usePredicciones'
 import { generarSugerencias } from '../services/sugerencias'
 import { useToast } from '../components/ui/ToastProvider'
+import { Button } from '../components/ui/Button'
 import { formatCantidad, formatFecha, nombreMetodoLegible } from '../lib/format'
 import type { PrediccionRead, SerieResponse } from '../api/types'
 import { mensajeDeError } from '../lib/errores'
@@ -97,21 +99,21 @@ export function Predicciones() {
             </p>
           </div>
           <div className="page-header-acciones">
-            <button
-              type="button"
-              className="btn btn-primary"
+            <Button
+              variante="primary"
+              iconoIzquierdo={<RefreshCw aria-hidden="true" />}
+              cargando={actualizando}
               onClick={handleActualizar}
-              disabled={actualizando}
             >
-              {actualizando ? 'Actualizando...' : 'Actualizar predicciones'}
-            </button>
+              Actualizar predicciones
+            </Button>
           </div>
         </div>
 
         <div className="aviso-simulacion" role="alert">
-          <span className="aviso-icon" aria-hidden="true">⚠</span>
-          <strong>Datos de simulación:</strong> la precisión mostrada valida el funcionamiento del modelo,
-          no su desempeño real en el negocio. Con historial real el modelo se recalibra (P13).
+          <span className="aviso-icon-lucide" aria-hidden="true"><TriangleAlert /></span>
+          <p><strong>Datos de simulación:</strong> la precisión mostrada valida el funcionamiento del modelo,
+          no su desempeño real en el negocio. Con historial real el modelo se recalibra (P13).</p>
         </div>
 
         <div className="resumen-prediccion grid-3">
@@ -294,7 +296,7 @@ function DetallePrediccion({
       <header className="detalle-header">
         <h2 id="detalle-titulo">Detalle: {prediccion.nombre} ({prediccion.codigo})</h2>
         <button type="button" className="btn btn-ghost btn-sm" onClick={onCerrar}>
-          Cerrar detalle
+          <span className="btn-icono" aria-hidden="true"><X /></span> Cerrar detalle
         </button>
       </header>
 

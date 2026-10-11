@@ -1,3 +1,4 @@
+import { SlidersHorizontal } from 'lucide-react'
 import { formatCantidad } from '../../lib/format'
 
 export type FilaExistencia = {
@@ -69,7 +70,7 @@ export function TablaExistencias({
                         className="btn btn-ghost btn-sm"
                         onClick={() => onAjustar(fila)}
                       >
-                        Ajustar
+                        <span className="btn-icono" aria-hidden="true"><SlidersHorizontal /></span> Ajustar
                       </button>
                     </div>
                   </td>

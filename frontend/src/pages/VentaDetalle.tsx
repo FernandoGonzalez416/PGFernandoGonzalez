@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { ArrowLeft, Ban, CircleAlert, ReceiptText, RotateCcw, X } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { CAPACIDADES } from '../api/capacidades'
 import { useAuth } from '../auth/useAuth'
 import { useCan } from '../auth/useCan'
 import { Dialogo } from '../components/ui/Dialogo'
+import { Button } from '../components/ui/Button'
 import { useToast } from '../components/ui/useToast'
 import { PillEstadoVenta } from '../components/ventas/EstadoVenta'
 import { etiquetaMetodo } from '../lib/venta'
@@ -57,7 +59,7 @@ export function VentaDetalle() {
       <div className="page-header">
         <div className="page-heading">
           <div className="page-back">
-            <Link to="/ventas" className="btn btn-ghost btn-sm">← Volver</Link>
+            <Link to="/ventas" className="btn btn-ghost btn-sm"><span className="btn-icono" aria-hidden="true"><ArrowLeft /></span> Volver</Link>
           </div>
           <h1>{venta !== null ? `Venta ${venta.folio}` : 'Detalle de venta'}</h1>
           {venta !== null && (
@@ -70,12 +72,12 @@ export function VentaDetalle() {
         {venta !== null && (
           <div className="page-actions">
             <Link to={`/ventas/${venta.id}/recibo`} className="btn btn-ghost">
-              Ver recibo
+              <span className="btn-icono" aria-hidden="true"><ReceiptText /></span> Ver recibo
             </Link>
             {puedeAnular && (
-              <button type="button" className="btn btn-danger" onClick={() => setDialogoAbierto(true)}>
+              <Button variante="danger" iconoIzquierdo={<Ban aria-hidden="true" />} onClick={() => setDialogoAbierto(true)}>
                 Anular venta
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -92,12 +94,16 @@ export function VentaDetalle() {
       {!cargando && error !== null && (
         <div className="card">
           <div className="empty">
-            <span className="empty-icon" aria-hidden="true">!</span>
+            <span className="empty-icon empty-icon-lucide" aria-hidden="true"><CircleAlert /></span>
             <h3>No se pudo cargar la venta</h3>
             <p>{error}</p>
-            <button type="button" className="btn btn-ghost" onClick={() => void recargar()}>
+            <Button
+              variante="ghost"
+              iconoIzquierdo={<RotateCcw aria-hidden="true" />}
+              onClick={() => void recargar()}
+            >
               Reintentar
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -163,22 +169,22 @@ export function VentaDetalle() {
         }}
         pie={
           <>
-            <button
-              type="button"
-              className="btn btn-ghost"
+            <Button
+              variante="ghost"
+              iconoIzquierdo={<X aria-hidden="true" />}
               disabled={procesando}
               onClick={() => setDialogoAbierto(false)}
             >
               Cancelar
-            </button>
-            <button
-              type="button"
-              className="btn btn-danger"
-              disabled={procesando}
+            </Button>
+            <Button
+              variante="danger"
+              iconoIzquierdo={<Ban aria-hidden="true" />}
+              cargando={procesando}
               onClick={() => void confirmarAnulacion()}
             >
-              {procesando ? 'Anulando…' : 'Anular venta'}
-            </button>
+              Anular venta
+            </Button>
           </>
         }
       >

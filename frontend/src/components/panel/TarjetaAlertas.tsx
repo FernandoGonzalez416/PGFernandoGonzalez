@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { motion, useReducedMotion } from 'motion/react'
 import { useAlertas } from '../../hooks/useAlertas'
 import { formatCantidad } from '../../lib/format'
 import { EstadoConsulta } from './EstadoConsulta'
@@ -37,19 +38,20 @@ function ContenidoAlertas({
   alertas: { bajo_stock: AlertaStockBajo[]; vencimiento_proximo: AlertaVencimientoProximo[] } | null
   enlace?: string
 }) {
+  const reducirMovimiento = useReducedMotion()
   return (
     <>
       {alertas !== null && (
         <div className="panel-metricas panel-metricas-chicas">
           <div className="panel-metrica">
             <span className="panel-metrica-etiqueta">Stock bajo</span>
-            <span className="panel-metrica-valor">
+            <span className="panel-metrica-valor num">
               {formatCantidad(alertas.bajo_stock.length)}
             </span>
           </div>
           <div className="panel-metrica">
             <span className="panel-metrica-etiqueta">Por vencer / vencido</span>
-            <span className="panel-metrica-valor">
+            <span className="panel-metrica-valor num">
               {formatCantidad(alertas.vencimiento_proximo.length)}
             </span>
           </div>
@@ -57,8 +59,14 @@ function ContenidoAlertas({
       )}
       {alertas !== null && (
         <ul className="panel-lista">
-          {filasDeAlerta(alertas.bajo_stock, alertas.vencimiento_proximo).map((fila) => (
-            <li key={`${fila.tipo}-${fila.id}`} className="panel-fila">
+          {filasDeAlerta(alertas.bajo_stock, alertas.vencimiento_proximo).map((fila, indice) => (
+            <motion.li
+              key={`${fila.tipo}-${fila.id}`}
+              className="panel-fila"
+              initial={reducirMovimiento === true ? false : { opacity: 0, transform: 'translateX(-8px)' }}
+              animate={{ opacity: 1, transform: 'translateX(0px)' }}
+              transition={{ duration: 0.32, delay: indice * 0.05, ease: [0.23, 1, 0.32, 1] }}
+            >
               <span className="texto-cortado">{fila.nombre}</span>
               <span className={`pill pill-${fila.tipo}`}>
                 {fila.tipo === 'agotado'
@@ -69,7 +77,7 @@ function ContenidoAlertas({
                       ? 'Vencido'
                       : `Faltan ${fila.cantidad} días`}
               </span>
-            </li>
+            </motion.li>
           ))}
         </ul>
       )}
@@ -82,7 +90,7 @@ function ContenidoAlertas({
   )
 }
 
-export function TarjetaAlertas({ enlace }: { enlace?: string }) {
+export function TarjetaAlertas({ enlace, retraso = 0 }: { enlace?: string; retraso?: number }) {
   const { alertas, cargando, error, recargar } = useAlertas()
 
   const vacio =
@@ -93,6 +101,7 @@ export function TarjetaAlertas({ enlace }: { enlace?: string }) {
       titulo="Alertas"
       enlace={enlace ?? '/alertas'}
       etiquetaEnlace="Revisar"
+      retraso={retraso}
       hijos={
         <EstadoConsulta
           cargando={cargando}

@@ -1,9 +1,24 @@
 import { NavLink } from 'react-router'
+import {
+  BarChart3,
+  Bell,
+  BellRing,
+  Boxes,
+  LayoutDashboard,
+  Lightbulb,
+  Package,
+  Receipt,
+  ShoppingCart,
+  Tags,
+  TrendingUp,
+  Truck,
+  type LucideIcon,
+} from 'lucide-react'
 import { CAPACIDADES } from '../../api/capacidades'
 import { useAuth } from '../../auth/useAuth'
 import { useCan } from '../../auth/useCan'
 
-type ItemNav = { to: string; etiqueta: string; visible: boolean; end?: boolean }
+type ItemNav = { to: string; etiqueta: string; visible: boolean; end?: boolean; icono: LucideIcon }
 
 export function Sidebar({ abierto, onNavegar }: { abierto: boolean; onNavegar: () => void }) {
   const { perfil } = useAuth()
@@ -21,36 +36,36 @@ export function Sidebar({ abierto, onNavegar }: { abierto: boolean; onNavegar: (
     {
       etiqueta: 'Inicio',
       items: [
-        { to: '/', etiqueta: 'Panel', visible: true, end: true },
+        { to: '/', etiqueta: 'Panel', visible: true, end: true, icono: LayoutDashboard },
       ],
     },
     {
       etiqueta: 'Catálogo',
       items: [
-        { to: '/productos', etiqueta: 'Productos', visible: puedeProductos },
-        { to: '/categorias', etiqueta: 'Categorías', visible: puedeCategorias },
-        { to: '/proveedores', etiqueta: 'Proveedores', visible: puedeProveedores },
+        { to: '/productos', etiqueta: 'Productos', visible: puedeProductos, icono: Package },
+        { to: '/categorias', etiqueta: 'Categorías', visible: puedeCategorias, icono: Tags },
+        { to: '/proveedores', etiqueta: 'Proveedores', visible: puedeProveedores, icono: Truck },
       ],
     },
     {
       etiqueta: 'Ventas',
       items: [
-        { to: '/ventas/nueva', etiqueta: 'Nueva venta', visible: puedeVentasRegistrar },
-        { to: '/ventas', etiqueta: 'Historial', visible: puedeStockConsultar, end: true },
+        { to: '/ventas/nueva', etiqueta: 'Nueva venta', visible: puedeVentasRegistrar, icono: ShoppingCart },
+        { to: '/ventas', etiqueta: 'Historial', visible: puedeStockConsultar, end: true, icono: Receipt },
       ],
     },
     {
       etiqueta: 'Inventario',
-      items: [{ to: '/inventario', etiqueta: 'Inventario', visible: puedeStockConsultar }],
+      items: [{ to: '/inventario', etiqueta: 'Inventario', visible: puedeStockConsultar, icono: Boxes }],
     },
     {
       etiqueta: 'Análisis',
       items: [
-        { to: '/alertas', etiqueta: 'Alertas', visible: puedeAlertas },
-        { to: '/reportes', etiqueta: 'Reportes', visible: puedeReportes },
-        { to: '/sugerencias', etiqueta: 'Sugerencias de compra', visible: puedeSugerencias },
-        { to: '/predicciones', etiqueta: 'Predicción de demanda', visible: puedePredicciones },
-        { to: '/notificaciones', etiqueta: 'Notificaciones', visible: puedeAlertas },
+        { to: '/alertas', etiqueta: 'Alertas', visible: puedeAlertas, icono: BellRing },
+        { to: '/reportes', etiqueta: 'Reportes', visible: puedeReportes, icono: BarChart3 },
+        { to: '/sugerencias', etiqueta: 'Sugerencias de compra', visible: puedeSugerencias, icono: Lightbulb },
+        { to: '/predicciones', etiqueta: 'Predicción de demanda', visible: puedePredicciones, icono: TrendingUp },
+        { to: '/notificaciones', etiqueta: 'Notificaciones', visible: puedeAlertas, icono: Bell },
       ],
     },
   ]
@@ -82,7 +97,9 @@ export function Sidebar({ abierto, onNavegar }: { abierto: boolean; onNavegar: (
                 className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
                 onClick={onNavegar}
               >
-                <span className="nav-dot" aria-hidden="true" />
+                <span className="nav-icono" aria-hidden="true">
+                  <item.icono />
+                </span>
                 {item.etiqueta}
               </NavLink>
             ))}

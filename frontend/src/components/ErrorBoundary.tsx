@@ -1,4 +1,7 @@
 import { Component, type ReactNode } from 'react'
+import { CircleAlert, RotateCcw } from 'lucide-react'
+import { Button } from './ui/Button'
+import { EmptyState } from './ui/EmptyState'
 
 type Props = { children: ReactNode }
 type State = { error: Error | null }
@@ -19,20 +22,22 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (error !== null) {
       return (
         <div className="pagina">
-          <div className="empty">
-            <span className="empty-icon" aria-hidden="true">!</span>
-            <h2>Algo salió mal</h2>
-            <p>La aplicación tuvo un error inesperado. Recarga la página e inténtalo de nuevo.</p>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => {
-                window.location.reload()
-              }}
-            >
-              Recargar
-            </button>
-          </div>
+          <EmptyState
+            icono={<CircleAlert />}
+            titulo="Algo salió mal"
+            descripcion="La aplicación tuvo un error inesperado. Recarga la página e inténtalo de nuevo."
+            accion={
+              <Button
+                variante="primary"
+                iconoIzquierdo={<RotateCcw aria-hidden="true" />}
+                onClick={() => {
+                  window.location.reload()
+                }}
+              >
+                Recargar
+              </Button>
+            }
+          />
         </div>
       )
     }

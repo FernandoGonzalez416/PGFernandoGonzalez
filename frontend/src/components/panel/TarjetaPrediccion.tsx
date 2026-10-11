@@ -1,9 +1,12 @@
+import { ArrowRight } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
 import { usePredicciones } from '../../hooks/usePredicciones'
 import { Link } from 'react-router'
 import { nombreMetodoLegible } from '../../lib/format'
 
-export function TarjetaPrediccion() {
+export function TarjetaPrediccion({ retraso = 0 }: { retraso?: number }) {
   const { predicciones, cargando } = usePredicciones()
+  const reducirMovimiento = useReducedMotion()
 
   if (cargando) {
     return (
@@ -39,7 +42,12 @@ export function TarjetaPrediccion() {
     : '—'
 
   return (
-    <article className="card card-prediccion">
+    <motion.article
+      className="card card-prediccion"
+      initial={reducirMovimiento === true ? false : { opacity: 0, transform: 'translateY(14px)' }}
+      animate={{ opacity: 1, transform: 'translateY(0px)' }}
+      transition={{ duration: 0.45, delay: retraso, ease: [0.23, 1, 0.32, 1] }}
+    >
       <header className="card-header">
         <h3>Predicción de demanda</h3>
       </header>
@@ -64,10 +72,10 @@ export function TarjetaPrediccion() {
             <span className="stat-etiq">Método más usado</span>
           </div>
         </div>
-        <Link to="/predicciones" className="card-enlace">
-          Ver todas las predicciones →
+        <Link to="/predicciones" className="card-enlace card-enlace-icono">
+          Ver todas las predicciones <ArrowRight aria-hidden="true" />
         </Link>
       </div>
-    </article>
+    </motion.article>
   )
 }

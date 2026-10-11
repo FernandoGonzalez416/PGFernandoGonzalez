@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router'
+import { ArrowLeft, CircleAlert, Printer } from 'lucide-react'
 import { PillEstadoVenta } from '../components/ventas/EstadoVenta'
 import { etiquetaMetodo } from '../lib/venta'
 import { useVenta } from '../hooks/useVenta'
@@ -13,7 +14,7 @@ export function VentaRecibo() {
     <div className="pagina recibo-pagina">
       <div className="recibo-acciones no-print">
         <Link to={id !== undefined ? `/ventas/${id}` : '/ventas'} className="btn btn-ghost btn-sm">
-          ← Volver
+          <span className="btn-icono" aria-hidden="true"><ArrowLeft /></span> Volver
         </Link>
         <button
           type="button"
@@ -21,7 +22,7 @@ export function VentaRecibo() {
           disabled={venta === null}
           onClick={() => window.print()}
         >
-          Imprimir
+          <span className="btn-icono" aria-hidden="true"><Printer /></span> Imprimir
         </button>
       </div>
 
@@ -36,7 +37,7 @@ export function VentaRecibo() {
       {!cargando && error !== null && (
         <div className="card">
           <div className="empty">
-            <span className="empty-icon" aria-hidden="true">!</span>
+            <span className="empty-icon empty-icon-lucide" aria-hidden="true"><CircleAlert /></span>
             <h3>No se pudo cargar el recibo</h3>
             <p>{error}</p>
             <button type="button" className="btn btn-ghost" onClick={() => void recargar()}>

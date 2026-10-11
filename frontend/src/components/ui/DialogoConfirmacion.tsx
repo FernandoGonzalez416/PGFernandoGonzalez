@@ -1,3 +1,5 @@
+import { Check, X } from 'lucide-react'
+import { Button } from './Button'
 import { Dialogo } from './Dialogo'
 
 export function DialogoConfirmacion({
@@ -26,17 +28,22 @@ export function DialogoConfirmacion({
       onCerrar={onCerrar}
       pie={
         <>
-          <button type="button" className="btn btn-ghost" onClick={onCerrar} disabled={ocupado}>
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className={`btn ${peligroso ? 'btn-nude' : 'btn-primary'}`}
-            onClick={onConfirmar}
+          <Button
+            variante="ghost"
+            iconoIzquierdo={<X aria-hidden="true" />}
+            onClick={onCerrar}
             disabled={ocupado}
           >
-            {ocupado ? 'Procesando…' : textoConfirmar}
-          </button>
+            Cancelar
+          </Button>
+          <Button
+            variante={peligroso ? 'nude' : 'primary'}
+            iconoIzquierdo={<Check aria-hidden="true" />}
+            onClick={onConfirmar}
+            cargando={ocupado}
+          >
+            {textoConfirmar}
+          </Button>
         </>
       }
     >

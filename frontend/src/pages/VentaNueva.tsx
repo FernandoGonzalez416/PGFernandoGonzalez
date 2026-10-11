@@ -1,6 +1,9 @@
 import { useMemo, useState, type KeyboardEvent } from 'react'
+import { Banknote, CircleAlert, PackagePlus, Plus, RotateCcw, SearchX, Trash2 } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
 import { useNavigate } from 'react-router'
 import { useToast } from '../components/ui/useToast'
+import { Button } from '../components/ui/Button'
 import { mensajeDeError } from '../lib/errores'
 import { formatCantidad, formatQ } from '../lib/format'
 import {
@@ -34,6 +37,7 @@ export function VentaNueva() {
   const { notificar } = useToast()
   const navegar = useNavigate()
   const { productos, cargando, error, busqueda, setBusqueda, recargar } = useProductos()
+  const reducirMovimiento = useReducedMotion()
 
   const [lineas, setLineas] = useState<LineaCarrito[]>([])
   const [descuentoTexto, setDescuentoTexto] = useState('')
@@ -125,23 +129,40 @@ export function VentaNueva() {
 
             {!cargando && error !== null && (
               <div className="empty">
-                <span className="empty-icon" aria-hidden="true">!</span>
+                <span className="empty-icon empty-icon-lucide" aria-hidden="true"><CircleAlert /></span>
                 <h3>No se pudieron cargar los productos</h3>
                 <p>{error}</p>
-                <button type="button" className="btn btn-ghost" onClick={() => void recargar()}>
+                <Button
+                  variante="ghost"
+                  iconoIzquierdo={<RotateCcw aria-hidden="true" />}
+                  onClick={() => void recargar()}
+                >
                   Reintentar
-                </button>
+                </Button>
               </div>
             )}
 
             {!cargando && error === null && productos.length === 0 && (
-              <p className="field-hint pos-sin-resultados">No hay productos que coincidan.</p>
+              <div className="empty tabla-vacia">
+                <span className="empty-icon empty-icon-lucide" aria-hidden="true"><SearchX /></span>
+                <h3>No hay productos que coincidan</h3>
+                <p>Prueba con otro código o nombre.</p>
+              </div>
             )}
 
             {!cargando && error === null && productos.length > 0 && (
               <ul className="pos-resultados">
                 {productos.map((producto, indice) => (
-                  <li key={producto.id}>
+                  <motion.li
+                    key={producto.id}
+                    initial={reducirMovimiento === true ? false : { opacity: 0, transform: 'translateY(6px)' }}
+                    animate={{ opacity: 1, transform: 'translateY(0px)' }}
+                    transition={{
+                      duration: 0.25,
+                      delay: Math.min(indice, 10) * 0.03,
+                      ease: [0.23, 1, 0.32, 1],
+                    }}
+                  >
                     <button
                       type="button"
                       className="pos-resultado"
@@ -155,9 +176,12 @@ export function VentaNueva() {
                           {producto.unidad_medida}
                         </span>
                       </span>
-                      <span className="num">{formatQ(producto.precio_venta)}</span>
+                      <span className="pos-resultado-precio">
+                        <span className="num">{formatQ(producto.precio_venta)}</span>
+                        <span className="btn-icono" aria-hidden="true"><Plus /></span>
+                      </span>
                     </button>
-                  </li>
+                  </motion.li>
                 ))}
               </ul>
             )}
@@ -167,14 +191,27 @@ export function VentaNueva() {
         <section className="card pos-carrito">
           <div className="pos-carrito-head">
             <h2>Carrito</h2>
-            <span className="pill pill-neutral">
-              {lineas.length} {lineas.length === 1 ? 'artículo' : 'artículos'}
-            </span>
+            <div className="pos-carrito-head-lado">
+              <span className="pill pill-neutral num">
+                {lineas.length} {lineas.length === 1 ? 'artículo' : 'artículos'}
+              </span>
+              {lineas.length > 0 && (
+                <Button
+                  variante="ghost"
+                  tamano="sm"
+                  iconoIzquierdo={<Trash2 aria-hidden="true" />}
+                  aria-label="Vaciar carrito"
+                  onClick={() => setLineas([])}
+                >
+                  Vaciar
+                </Button>
+              )}
+            </div>
           </div>
 
           {lineas.length === 0 ? (
             <div className="empty pos-vacio">
-              <span className="empty-icon" aria-hidden="true">＋</span>
+              <span className="empty-icon empty-icon-lucide" aria-hidden="true"><PackagePlus /></span>
               <h3>Aún no hay productos</h3>
               <p>Busca un producto y agrégalo al carrito para cobrar.</p>
             </div>
@@ -221,14 +258,16 @@ export function VentaNueva() {
                 </select>
               </div>
             </div>
-            <button
-              type="button"
-              className="btn btn-primary btn-block"
+            <Button
+              variante="primary"
+              bloque
+              cargando={enviando}
               disabled={lineas.length === 0 || enviando}
+              iconoIzquierdo={<Banknote aria-hidden="true" />}
               onClick={() => void cobrar()}
             >
-              {enviando ? 'Registrando…' : `Cobrar ${formatQ(totales.totalCents / 100)}`}
-            </button>
+              {`Cobrar ${formatQ(totales.totalCents / 100)}`}
+            </Button>
           </div>
         </section>
       </div>

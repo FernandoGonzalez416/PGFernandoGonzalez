@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
+import { Check, CircleAlert, PackagePlus, Pencil, Plus, Power, RotateCcw, X } from 'lucide-react'
 import type { ProveedorRead } from '../api/types'
+import { Button } from '../components/ui/Button'
 import { Dialogo } from '../components/ui/Dialogo'
 import { DialogoConfirmacion } from '../components/ui/DialogoConfirmacion'
 import { useToast } from '../components/ui/useToast'
@@ -118,9 +120,9 @@ export function Proveedores() {
           <p className="page-sub">Guarda precios y condiciones de entrega de tus proveedores.</p>
         </div>
         <div className="page-actions">
-          <button type="button" className="btn btn-primary" onClick={abrirCrear}>
+          <Button variante="primary" iconoIzquierdo={<Plus aria-hidden="true" />} onClick={abrirCrear}>
             Nuevo proveedor
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -146,18 +148,22 @@ export function Proveedores() {
 
         {!cargando && error !== null && (
           <div className="empty">
-            <span className="empty-icon" aria-hidden="true">!</span>
+            <span className="empty-icon empty-icon-lucide" aria-hidden="true"><CircleAlert /></span>
             <h3>No se pudieron cargar los proveedores</h3>
             <p>{error}</p>
-            <button type="button" className="btn btn-ghost" onClick={() => void recargar()}>
+            <Button
+              variante="ghost"
+              iconoIzquierdo={<RotateCcw aria-hidden="true" />}
+              onClick={() => void recargar()}
+            >
               Reintentar
-            </button>
+            </Button>
           </div>
         )}
 
         {!cargando && error === null && proveedores.length === 0 && (
           <div className="empty tabla-vacia">
-            <span className="empty-icon" aria-hidden="true">＋</span>
+            <span className="empty-icon empty-icon-lucide" aria-hidden="true"><PackagePlus /></span>
             <h3>Aún no hay proveedores</h3>
             <p>Registra a quién le compras para tener sus datos a mano.</p>
           </div>
@@ -197,14 +203,14 @@ export function Proveedores() {
                           className="btn btn-ghost btn-sm"
                           onClick={() => abrirEditar(proveedor)}
                         >
-                          Editar
+                          <span className="btn-icono" aria-hidden="true"><Pencil /></span> Editar
                         </button>
                         <button
                           type="button"
                           className="btn btn-ghost btn-sm"
                           onClick={() => setACambiarEstado(proveedor)}
                         >
-                          {proveedor.activo ? 'Desactivar' : 'Reactivar'}
+                          <span className="btn-icono" aria-hidden="true"><Power /></span> {proveedor.activo ? 'Desactivar' : 'Reactivar'}
                         </button>
                       </div>
                     </td>
@@ -222,17 +228,23 @@ export function Proveedores() {
         onCerrar={() => setDialogoAbierto(false)}
         pie={
           <>
-            <button
-              type="button"
-              className="btn btn-ghost"
+            <Button
+              variante="ghost"
+              iconoIzquierdo={<X aria-hidden="true" />}
               onClick={() => setDialogoAbierto(false)}
               disabled={guardando}
             >
               Cancelar
-            </button>
-            <button type="submit" form="form-proveedor" className="btn btn-primary" disabled={guardando}>
-              {guardando ? 'Guardando…' : 'Guardar'}
-            </button>
+            </Button>
+            <Button
+              variante="primary"
+              iconoIzquierdo={<Check aria-hidden="true" />}
+              cargando={guardando}
+              type="submit"
+              form="form-proveedor"
+            >
+              Guardar
+            </Button>
           </>
         }
       >

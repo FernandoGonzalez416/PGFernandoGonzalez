@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CheckCheck, Eye, RotateCcw } from 'lucide-react'
 import { CAPACIDADES } from '../api/capacidades'
 import { RequireCapacidad } from '../auth/RequireCapacidad'
 import { useNotificaciones } from '../hooks/useNotificaciones'
@@ -6,6 +7,7 @@ import { listarNotificaciones, marcarNotificacionLeida } from '../services/notif
 import { formatFecha } from '../lib/format'
 import { mensajeDeError } from '../lib/errores'
 import { useToast } from '../components/ui/ToastProvider'
+import { Button } from '../components/ui/Button'
 import { Link } from 'react-router'
 
 export function Notificaciones() {
@@ -50,12 +52,12 @@ export function Notificaciones() {
             <p className="page-subtitle">Historial de alertas y sugerencias.</p>
           </div>
           <div className="page-header-acciones">
-            <button type="button" className="btn btn-ghost" onClick={marcarTodas}>
+            <Button variante="ghost" iconoIzquierdo={<CheckCheck aria-hidden="true" />} onClick={marcarTodas}>
               Marcar todas como leídas
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={recargar}>
+            </Button>
+            <Button variante="ghost" iconoIzquierdo={<RotateCcw aria-hidden="true" />} onClick={recargar}>
               Actualizar
-            </button>
+            </Button>
           </div>
         </div>
         <section className="card">
@@ -100,7 +102,7 @@ export function Notificaciones() {
                         onClick={() => marcarComoLeida(n.id)}
                         disabled={procesando === n.id}
                       >
-                        Marcar como leída
+                        <span className="btn-icono" aria-hidden="true"><Eye /></span> Marcar como leída
                       </button>
                     )}
                     {n.tipo === 'sugerencia_compra' && (

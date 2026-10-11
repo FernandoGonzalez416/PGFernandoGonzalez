@@ -1,4 +1,7 @@
 import type { ReactNode } from 'react'
+import { CircleAlert, RotateCcw } from 'lucide-react'
+import { Button } from '../ui/Button'
+import { EmptyState } from '../ui/EmptyState'
 
 export function EstadoConsulta({
   cargando,
@@ -27,13 +30,21 @@ export function EstadoConsulta({
 
   if (error !== null) {
     return (
-      <div className="empty bloque-error">
-        <span className="empty-icon" aria-hidden="true">!</span>
-        <p>{error}</p>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={onReintentar}>
-          Reintentar
-        </button>
-      </div>
+      <EmptyState
+        icono={<CircleAlert />}
+        titulo="No se pudo cargar"
+        descripcion={error}
+        accion={
+          <Button
+            variante="ghost"
+            tamano="sm"
+            iconoIzquierdo={<RotateCcw aria-hidden="true" />}
+            onClick={onReintentar}
+          >
+            Reintentar
+          </Button>
+        }
+      />
     )
   }
 

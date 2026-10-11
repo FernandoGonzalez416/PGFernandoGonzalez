@@ -28,7 +28,7 @@ function tituloDeRuta(pathname: string): string {
 export function AppLayout() {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const { pathname } = useLocation()
-  void tituloDeRuta(pathname)
+  const titulo = tituloDeRuta(pathname)
 
   return (
     <div className="app-shell">
@@ -37,7 +37,7 @@ export function AppLayout() {
         <div className="scrim" role="presentation" onClick={() => setMenuAbierto(false)} />
       )}
       <div className="main-column">
-        <Topbar />
+        <Topbar titulo={titulo} onAbrirMenu={() => setMenuAbierto(true)} />
         <main className="content">
           <div className="content-inner">
             <BarraDemo />

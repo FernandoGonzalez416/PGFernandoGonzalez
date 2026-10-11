@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
+import { X } from 'lucide-react'
 import { ContextoToast, type ContextoToastValor, type NivelToast, type Notificar } from './contextoToast'
 
 type Toast = { id: number; mensaje: string; nivel: NivelToast }
@@ -50,7 +51,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               aria-label="Cerrar notificación"
               onClick={() => descartar(toast.id)}
             >
-              ×
+              <X aria-hidden="true" />
             </button>
           </div>
         ))}

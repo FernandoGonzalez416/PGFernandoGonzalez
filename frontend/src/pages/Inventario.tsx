@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Check, CircleAlert, PackagePlus, RotateCcw, X } from 'lucide-react'
 import { CAPACIDADES } from '../api/capacidades'
 import { useCan } from '../auth/useCan'
 import {
@@ -10,6 +11,7 @@ import {
   type FilaMovimiento,
 } from '../components/inventario/TablaMovimientos'
 import { Dialogo } from '../components/ui/Dialogo'
+import { Button } from '../components/ui/Button'
 import { useToast } from '../components/ui/useToast'
 import { useExistencias } from '../hooks/useExistencias'
 import { useMovimientos } from '../hooks/useMovimientos'
@@ -137,18 +139,22 @@ export function Inventario() {
 
         {!cargando && error !== null && (
           <div className="empty">
-            <span className="empty-icon" aria-hidden="true">!</span>
+            <span className="empty-icon empty-icon-lucide" aria-hidden="true"><CircleAlert /></span>
             <h3>No se pudieron cargar las existencias</h3>
             <p>{error}</p>
-            <button type="button" className="btn btn-ghost" onClick={() => void recargarExistencias()}>
+            <Button
+              variante="ghost"
+              iconoIzquierdo={<RotateCcw aria-hidden="true" />}
+              onClick={() => void recargarExistencias()}
+            >
               Reintentar
-            </button>
+            </Button>
           </div>
         )}
 
         {!cargando && error === null && filasExistencias.length === 0 && (
           <div className="empty tabla-vacia">
-            <span className="empty-icon" aria-hidden="true">＋</span>
+            <span className="empty-icon empty-icon-lucide" aria-hidden="true"><PackagePlus /></span>
             <h3>No hay existencias registradas</h3>
             <p>Cuando existan productos con existencia aparecerán aquí.</p>
           </div>
@@ -183,18 +189,22 @@ export function Inventario() {
 
           {!cargandoMovimientos && errorMovimientos !== null && (
             <div className="empty">
-              <span className="empty-icon" aria-hidden="true">!</span>
+              <span className="empty-icon empty-icon-lucide" aria-hidden="true"><CircleAlert /></span>
               <h3>No se pudieron cargar los movimientos</h3>
               <p>{errorMovimientos}</p>
-              <button type="button" className="btn btn-ghost" onClick={recargarMovimientos}>
+              <Button
+                variante="ghost"
+                iconoIzquierdo={<RotateCcw aria-hidden="true" />}
+                onClick={recargarMovimientos}
+              >
                 Reintentar
-              </button>
+              </Button>
             </div>
           )}
 
           {!cargandoMovimientos && errorMovimientos === null && filasMovimientos.length === 0 && (
             <div className="empty tabla-vacia">
-              <span className="empty-icon" aria-hidden="true">＋</span>
+              <span className="empty-icon empty-icon-lucide" aria-hidden="true"><PackagePlus /></span>
               <h3>No hay movimientos registrados</h3>
               <p>Las entradas, salidas y ajustes aparecerán aquí.</p>
             </div>
@@ -214,22 +224,22 @@ export function Inventario() {
         }}
         pie={
           <>
-            <button
-              type="button"
-              className="btn btn-ghost"
+            <Button
+              variante="ghost"
+              iconoIzquierdo={<X aria-hidden="true" />}
               disabled={procesando}
               onClick={() => setAjuste(null)}
             >
               Cancelar
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={procesando}
+            </Button>
+            <Button
+              variante="primary"
+              iconoIzquierdo={<Check aria-hidden="true" />}
+              cargando={procesando}
               onClick={() => void confirmarAjuste()}
             >
-              {procesando ? 'Ajustando…' : 'Aplicar ajuste'}
-            </button>
+              Aplicar ajuste
+            </Button>
           </>
         }
       >

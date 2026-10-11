@@ -22,12 +22,12 @@ export function Panel() {
         </div>
       </div>
       <div className="panel-grid">
-        <TarjetaResumenVentas />
-        {puedeAlertas && <TarjetaAlertas enlace="/alertas" />}
-        {puedeReportes && <TarjetaMasVendidos enlace="/reportes" />}
-        <TarjetaUltimasVentas enlace="/ventas" />
-        {puedeSugerencias && <TarjetaSugerencias enlace="/sugerencias" />}
-        {puedePredicciones && <TarjetaPrediccion />}
+        <TarjetaResumenVentas retraso={0} />
+        {puedeAlertas && <TarjetaAlertas enlace="/alertas" retraso={0.06} />}
+        {puedeReportes && <TarjetaMasVendidos enlace="/reportes" retraso={0.12} />}
+        <TarjetaUltimasVentas enlace="/ventas" retraso={0.18} />
+        {puedeSugerencias && <TarjetaSugerencias enlace="/sugerencias" retraso={0.24} />}
+        {puedePredicciones && <TarjetaPrediccion retraso={0.3} />}
       </div>
     </div>
   )

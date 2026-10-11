@@ -127,4 +127,31 @@ describe('VentaNueva', () => {
     expect(cobrar).toBeEnabled()
     expect(cobrar).toHaveTextContent('Q 25.00')
   })
+
+  it('quita la línea del carrito con el botón Quitar', () => {
+    montar()
+    escanear('SIM-001')
+    expect(screen.getByRole('button', { name: /Cobrar/ })).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar' }))
+    expect(screen.getByRole('button', { name: /Cobrar/ })).toBeDisabled()
+    expect(screen.getByText('Aún no hay productos')).toBeInTheDocument()
+  })
+
+  it('quita la línea al restar cuando la cantidad es 1', () => {
+    montar()
+    escanear('SIM-001')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Quitar Labial mate del carrito' }),
+    )
+    expect(screen.getByRole('button', { name: /Cobrar/ })).toBeDisabled()
+  })
+
+  it('vacía el carrito con el botón Vaciar', () => {
+    montar()
+    escanear('SIM-001')
+    escanear('SIM-002')
+    fireEvent.click(screen.getByRole('button', { name: 'Vaciar carrito' }))
+    expect(screen.getByRole('button', { name: /Cobrar/ })).toBeDisabled()
+    expect(screen.getByText('Aún no hay productos')).toBeInTheDocument()
+  })
 })
