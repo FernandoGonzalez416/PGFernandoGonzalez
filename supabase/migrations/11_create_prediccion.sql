@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS prediccion (
     datos_ficticios boolean NOT NULL DEFAULT false,
     created_at timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT chk_prediccion_demanda CHECK (demanda_pronosticada >= 0),
-    CONSTRAINT chk_prediccion_metodo CHECK (metodo IN ('promedio_movil', 'random_forest', 'hist_gradient_boosting', 'ridge')),
+    CONSTRAINT chk_prediccion_metodo CHECK (metodo IN ('promedio_movil', 'random_forest', 'hist_gradient_boosting', 'ridge', 'sin_historial')),
     CONSTRAINT chk_prediccion_confianza CHECK (nivel_confianza IN ('alta', 'baja', 'simulacion')),
     CONSTRAINT chk_prediccion_horizonte CHECK (fin_horizonte >= inicio_horizonte),
     CONSTRAINT chk_prediccion_intervalo CHECK (intervalo_inf IS NULL OR intervalo_sup IS NULL OR intervalo_inf <= intervalo_sup)
