@@ -30,7 +30,8 @@ function PillConfianza({ nivel }: { nivel: string }) {
 
 function MejoraPct({ mejora }: { mejora: number | null }) {
   if (mejora === null) return <span className="muted">—</span>
-  const positivo = mejora >= 0
+  if (mejora === 0) return <span className="muted">{mejora.toFixed(1)}%</span>
+  const positivo = mejora > 0
   return (
     <span className={positivo ? 'mejora-positiva' : 'mejora-negativa'}>
       {positivo ? '+' : ''}{mejora.toFixed(1)}%

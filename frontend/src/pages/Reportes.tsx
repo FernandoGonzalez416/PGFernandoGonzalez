@@ -8,19 +8,38 @@ import { haceDiasISO, hoyISO } from '../lib/fecha'
 
 export function Reportes() {
   const [diasVentana, setDiasVentana] = useState(30)
-  const fechaInicioDefault = haceDiasISO(diasVentana - 1)
-  const fechaFinDefault = hoyISO()
-  const [fechaInicio, setFechaInicio] = useState(fechaInicioDefault)
-  const [fechaFin, setFechaFin] = useState(fechaFinDefault)
+  const [fechaInicio, setFechaInicio] = useState('')
+  const [fechaFin, setFechaFin] = useState('')
   const { items, cargando, error, recargar } = useMasVendidos(50, diasVentana)
+
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setFechaInicio(haceDiasISO(diasVentana - 1))
     setFechaFin(hoyISO())
   }, [diasVentana])
-/* eslint-enable react-hooks/set-state-in-effect */
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  const maximo = Math.max(0, ...items.map((i) => i.cantidad_vendida))
+  const maximo = Math.max(0, ...items.map((i) => Number(i.cantidad_vendida)))
+
+  const filas = items.map((item, idx) => {
+    const cantidad = Number(item.cantidad_vendida)
+    const ancho = maximo > 0 ? (cantidad / maximo) * 100 : 0
+    return (
+      <tr key={item.producto_id}>
+        <td data-label="Producto">
+          {idx + 1}. {item.nombre}
+        </td>
+        <td data-label="Código">{item.codigo ?? '—'}</td>
+        <td data-label="Cantidad vendida">
+          {formatCantidad(cantidad)}
+          <div className="barra-horizontal">
+            <div className="barra-horizontal-fill" style={{ width: `${ancho}%` }} />
+          </div>
+        </td>
+        <td data-label="Total">{formatQ(item.total_vendido)}</td>
+      </tr>
+    )
+  })
 
   return (
     <RequireCapacidad capacidad={CAPACIDADES.reportesVer}>
@@ -77,38 +96,22 @@ export function Reportes() {
               onReintentar={recargar}
               vacio={items.length === 0}
               mensajeVacio="No hay ventas en el periodo seleccionado."
-            >
-              <table className="data-table" aria-label="Productos más vendidos">
-                <thead>
-                  <tr>
-                    <th>Producto</th>
-                    <th>Código</th>
-                    <th>Cantidad vendida</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item, idx) => {
-                    const ancho = maximo > 0 ? (item.cantidad_vendida / maximo) * 100 : 0
-                    return (
-                      <tr key={item.producto_id}>
-                        <td data-label="Producto">
-                          {idx + 1}. {item.nombre}
-                        </td>
-                        <td data-label="Código">{item.codigo ?? '—'}</td>
-                        <td data-label="Cantidad vendida">
-                          {formatCantidad(item.cantidad_vendida)}
-                          <div className="barra-horizontal">
-                            <div className="barra-horizontal-fill" style={{ width: `${ancho}%` }} />
-                          </div>
-                        </td>
-                        <td data-label="Total">{formatQ(item.total_vendido)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </EstadoConsulta>
+              hijos={
+                <table className="data-table" aria-label="Productos más vendidos">
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th>Código</th>
+                      <th>Cantidad vendida</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filas}
+                  </tbody>
+                </table>
+              }
+            />
           </div>
         </section>
       </div>

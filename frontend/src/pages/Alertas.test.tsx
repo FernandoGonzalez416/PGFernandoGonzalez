@@ -7,20 +7,20 @@ import { Alertas } from './Alertas'
 const mocks = {
   alertas: {
     bajo_stock: [
-      { producto_id: 'p1', codigo: 'SIM-001', nombre: 'Labial rojo', existencia: 0, umbral_minimo: 5, agotado: true },
-      { producto_id: 'p2', codigo: 'SIM-002', nombre: 'Crema facial', existencia: 2, umbral_minimo: 5, agotado: false },
+      { producto_id: 'p1', codigo: 'SIM-001', nombre: 'Labial rojo', existencia: '0', umbral_minimo: '5', agotado: true },
+      { producto_id: 'p2', codigo: 'SIM-002', nombre: 'Crema facial', existencia: '2', umbral_minimo: '5', agotado: false },
     ],
     vencimiento_proximo: [
       { producto_id: 'p3', codigo: 'SIM-003', nombre: 'Sombra ojos', fecha_vencimiento: '2026-10-10', dias_vencimiento_aviso: 30, dias_restantes: 0, vencido: true },
       { producto_id: 'p4', codigo: 'SIM-004', nombre: 'Perfume', fecha_vencimiento: '2026-10-20', dias_vencimiento_aviso: 30, dias_restantes: 10, vencido: false },
     ],
-    alertasVacia: { bajo_stock: [], vencimiento_proximo: [] },
-    perfil: {
-      id: 'u1', auth_id: 'a1', nombre: 'U', email: 'u@c.com', rol: 'propietario', activo: true,
-      capacidades: ['stock:consultar', 'alertas:ver'],
-    },
-    showEmpty: { current: false },
   },
+  alertasVacia: { bajo_stock: [], vencimiento_proximo: [] },
+  perfil: {
+    id: 'u1', auth_id: 'a1', nombre: 'U', email: 'u@c.com', rol: 'propietario', activo: true,
+    capacidades: ['stock:consultar', 'alertas:ver'],
+  },
+  showEmpty: { current: false },
 }
 
 vi.mock('../auth/useAuth', () => ({
@@ -64,7 +64,7 @@ describe('Alertas', () => {
 
   it('muestra pill Por vencer con dias restantes', () => {
     renderAlertas()
-    expect(screen.getByText('Faltan 10 dias')).toBeInTheDocument()
+    expect(screen.getByText(/Faltan 10 días/)).toBeInTheDocument()
   })
 
   it('muestra estado vacio cuando no hay alertas', () => {

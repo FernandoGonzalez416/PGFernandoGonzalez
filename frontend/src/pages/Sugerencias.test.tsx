@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '../components/ui/ToastProvider'
+import { ApiError } from '../api/client'
+import { actualizarSugerencia } from '../services/sugerencias'
 import { Sugerencias } from './Sugerencias'
 
 const mocks = vi.hoisted(() => ({
@@ -54,9 +56,6 @@ vi.mock('../auth/useCan', () => ({
 }))
 
 function renderSugerencias() {
-  mocks.canMap.current.set('sugerencias:ver', true)
-  mocks.canMap.current.set('sugerencias:atender', true)
-  mocks.canMap.current.set('prediccion:ver', true)
   return render(
     <MemoryRouter initialEntries={['/sugerencias']}>
       <ToastProvider>
@@ -106,7 +105,7 @@ describe('Sugerencias', () => {
   })
 
   it('muestra error 409 al atender sugerencia no pendiente', async () => {
-    mocks.actualizarError.current = true
+    vi.mocked(actualizarSugerencia).mockRejectedValueOnce(new ApiError(409, 'Sugerencia no está pendiente'))
     renderSugerencias()
     const btnAtender = screen.getByRole('button', { name: 'Atender' })
     await fireEvent.click(btnAtender)

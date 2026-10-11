@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '../components/ui/ToastProvider'
 import { Reportes } from './Reportes'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mocks = vi.hoisted(() => ({ 
   items: [
     { producto_id: 'p1', codigo: 'SIM-001', nombre: 'Labial rojo', cantidad_vendida: 50, total_vendido: '1000.00' },
@@ -38,14 +37,16 @@ describe('Reportes', () => {
 
   it('renderiza tabla con productos más vendidos', () => {
     renderReportes()
-    expect(screen.getByText('Labial rojo')).toBeInTheDocument()
+    expect(screen.getByText(/Labial rojo/)).toBeInTheDocument()
     expect(screen.getByText('50')).toBeInTheDocument()
   })
 
   it('muestra barra horizontal proporcional a cantidad vendida', () => {
     renderReportes()
-    const bar = screen.getByRole('img', { name: /productos más vendidos/i })
-    expect(bar).toBeInTheDocument()
+    const tabla = screen.getByRole('table', { name: /productos más vendidos/i })
+    expect(tabla).toBeInTheDocument()
+    const barra = tabla.querySelector('.barra-horizontal-fill')
+    expect(barra).toHaveStyle({ width: '100%' })
   })
 
   it('permite cambiar el periodo y actualiza las fechas', () => {

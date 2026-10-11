@@ -11,6 +11,16 @@ export function CampanaNotificaciones() {
   const ref = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
+  const cargar = async () => {
+    try {
+      setCargando(true)
+      const datos = await listarNotificaciones({ leida: false, limite: 8 })
+      setNotificaciones(datos.items)
+    } finally {
+      setCargando(false)
+    }
+  }
+
   useEffect(() => {
     function alClicExterno(evento: MouseEvent) {
       if (ref.current !== null && !ref.current.contains(evento.target as Node)) {
@@ -25,8 +35,7 @@ export function CampanaNotificaciones() {
     let cancelado = false
     ;(async () => {
       try {
-        const datos = await listarNotificaciones({ leida: false, limite: 8 })
-        if (!cancelado) setNotificaciones(datos.items)
+        await cargar()
       } finally {
         if (!cancelado) setCargando(false)
       }
@@ -56,6 +65,7 @@ export function CampanaNotificaciones() {
       <button
         type="button"
         className="campana-btn"
+        aria-label="Notificaciones"
         aria-haspopup="true"
         aria-expanded={abierto}
         onClick={() => {

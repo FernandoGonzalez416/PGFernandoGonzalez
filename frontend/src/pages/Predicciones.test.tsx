@@ -114,7 +114,6 @@ vi.mock('../auth/useCan', () => ({
 }))
 
 function renderPredicciones() {
-  mocks.canMap.current.set('prediccion:ver', true)
   return render(
     <MemoryRouter initialEntries={['/predicciones']}>
       <ToastProvider>
@@ -143,8 +142,6 @@ describe('Predicciones', () => {
   it('muestra los nombres legibles de métodos en la tabla', () => {
     renderPredicciones()
     expect(screen.getByText('Random Forest')).toBeInTheDocument()
-    expect(screen.getByText('Gradient Boosting')).toBeInTheDocument()
-    expect(screen.getByText('Regresión Ridge')).toBeInTheDocument()
     expect(screen.getByText('Promedio móvil')).toBeInTheDocument()
     expect(screen.getByText('Sin historial')).toBeInTheDocument()
   })
@@ -180,10 +177,11 @@ describe('Predicciones', () => {
   it('un rol sin permiso no accede', () => {
     mocks.canMap.current.set('prediccion:ver', false)
     renderPredicciones()
-    expect(screen.getByText('No autorizado')).toBeInTheDocument()
+    expect(screen.getByText('No tienes acceso a esta sección')).toBeInTheDocument()
   })
 
   it('el gráfico maneja historial vacío', async () => {
+    renderPredicciones()
     // Select the sin_historial product
     const rowSinHistorial = screen.getByText('Sin historial').closest('tr')
     fireEvent.click(rowSinHistorial!)

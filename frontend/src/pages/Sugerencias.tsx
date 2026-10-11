@@ -67,6 +67,77 @@ export function Sugerencias() {
     }
   }
 
+  const renderTabla = () => (
+    <table className="data-table" aria-label="Sugerencias">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Código</th>
+          <th>Método</th>
+          <th>Confianza</th>
+          <th>Cantidad sugerida</th>
+          <th>Prioridad</th>
+          <th>Demanda / Stock</th>
+          <th>Fecha</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {sugerencias.map((s) => (
+          <tr key={s.id}>
+            <td data-label="Producto">{s.nombre ?? '—'}</td>
+            <td data-label="Código">{s.codigo ?? '—'}</td>
+            <td data-label="Método">{s.metodo ? nombreMetodoLegible(s.metodo) : '—'}</td>
+            <td data-label="Confianza"><PillConfianza nivel={s.nivel_confianza} /></td>
+            <td data-label="Cantidad sugerida">{formatCantidad(s.cantidad_sugerida)}</td>
+            <td data-label="Prioridad">
+              <span className={`pill pill-prioridad-${s.prioridad}`}>{s.prioridad}</span>
+            </td>
+            <td data-label="Demanda / Stock">
+              {formatCantidad(s.demanda_pronosticada)} / {formatCantidad(s.stock_proyectado)}
+            </td>
+            <td data-label="Fecha">{formatFecha(s.fecha)}</td>
+            <td data-label="Acciones" className="row-actions">
+              {puedeAtender && s.estado === 'pendiente' ? (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => handleAccion(s, 'atendida')}
+                    disabled={procesando === s.id}
+                  >
+                    Atender
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => handleAccion(s, 'descartada')}
+                    disabled={procesando === s.id}
+                  >
+                    Descartar
+                  </button>
+                </>
+              ) : (
+                <span className="muted">{s.estado}</span>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+
+  const botonGenerar = puedeGenerar ? (
+    <button
+      type="button"
+      className="btn btn-primary"
+      onClick={handleGenerar}
+      disabled={generando}
+    >
+      {generando ? 'Generando...' : 'Generar sugerencias'}
+    </button>
+  ) : null
+
   return (
     <RequireCapacidad capacidad={CAPACIDADES.sugerenciasVer}>
       <div className="pagina">
@@ -78,16 +149,7 @@ export function Sugerencias() {
             </p>
           </div>
           <div className="page-header-acciones">
-            {puedeGenerar && (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleGenerar}
-                disabled={generando}
-              >
-                {generando ? 'Generando...' : 'Generar sugerencias'}
-              </button>
-            )}
+            {botonGenerar}
           </div>
         </div>
         <section className="card">
@@ -115,65 +177,8 @@ export function Sugerencias() {
               onReintentar={recargar}
               vacio={sugerencias.length === 0}
               mensajeVacio="No hay sugerencias para este filtro."
-            >
-              <table className="data-table" aria-label="Sugerencias">
-                <thead>
-                  <tr>
-                    <th>Producto</th>
-                    <th>Código</th>
-                    <th>Método</th>
-                    <th>Confianza</th>
-                    <th>Cantidad sugerida</th>
-                    <th>Prioridad</th>
-                    <th>Demanda / Stock</th>
-                    <th>Fecha</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sugerencias.map((s) => (
-                    <tr key={s.id}>
-                      <td data-label="Producto">{s.nombre ?? '—'}</td>
-                      <td data-label="Código">{s.codigo ?? '—'}</td>
-                      <td data-label="Método">{s.metodo ? nombreMetodoLegible(s.metodo) : '—'}</td>
-                      <td data-label="Confianza"><PillConfianza nivel={s.nivel_confianza} /></td>
-                      <td data-label="Cantidad sugerida">{formatCantidad(s.cantidad_sugerida)}</td>
-                      <td data-label="Prioridad">
-                        <span className={`pill pill-prioridad-${s.prioridad}`}>{s.prioridad}</span>
-                      </td>
-                      <td data-label="Demanda / Stock">
-                        {formatCantidad(s.demanda_pronosticada)} / {formatCantidad(s.stock_proyectado)}
-                      </td>
-                      <td data-label="Fecha">{formatFecha(s.fecha)}</td>
-                      <td data-label="Acciones" className="row-actions">
-                        {puedeAtender && s.estado === 'pendiente' ? (
-                          <>
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-sm"
-                              onClick={() => handleAccion(s, 'atendida')}
-                              disabled={procesando === s.id}
-                            >
-                              Atender
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-sm"
-                              onClick={() => handleAccion(s, 'descartada')}
-                              disabled={procesando === s.id}
-                            >
-                              Descartar
-                            </button>
-                          </>
-                        ) : (
-                          <span className="muted">{s.estado}</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </EstadoConsulta>
+              hijos={renderTabla()}
+            />
           </div>
           <div className="paginacion">
             <button
