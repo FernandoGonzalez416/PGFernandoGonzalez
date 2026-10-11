@@ -16,6 +16,9 @@ VENTANA_MINIMA_DIAS = 75
 DIAS_CON_VENTA_ENTRENAMIENTO_MIN = 20
 DIAS_CON_VENTA_VALIDACION_MIN = 3
 VALIDACION_DIAS = 14
+# Orígenes rodantes para la evaluación semanal (M1-TER): los últimos 7 días
+# de la ventana de validación como primer día de cada semana pronosticada
+ORIGENES_RODANTES = 8
 
 
 @dataclass
@@ -42,17 +45,17 @@ def calcular_metricas(
     y_pred: np.ndarray,
 ) -> Tuple[float, float, float]:
     """
-    Calcula MAE, WAPE y nMAE.
+    Calcula MAE, WAPE y nMAE sobre DEMANDA SEMANAL ACUMULADA (M1-TER).
 
-    WAPE: solo sobre días con venta real > 0
-    nMAE: MAE / demanda_media_diaria (sobre todo el periodo de validación)
+    Cada elemento de y_real / y_pred es el total de una semana de 7 días.
+    MAE_semanal: unidades por semana. WAPE_semanal = suma|error| / suma real.
+    nMAE = MAE_semanal / demanda semanal media.
     """
     mae = float(mean_absolute_error(y_real, y_pred))
 
-    # WAPE: solo días con venta > 0
-    mask_venta = y_real > 0
-    if np.any(mask_venta):
-        wape = float(np.sum(np.abs(y_real[mask_venta] - y_pred[mask_venta])) / np.sum(y_real[mask_venta]))
+    total_real = float(np.sum(y_real))
+    if total_real > 0:
+        wape = float(np.sum(np.abs(y_real - y_pred)) / total_real)
     else:
         wape = 0.0
 
@@ -81,21 +84,13 @@ def evaluar_por_bloques_recursivos(
     serie_hist_completa: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Evaluación por bloques de 7 días con EL MISMO procedimiento recursivo de producción.
+    Evaluación semanal acumulada con orígenes rodantes (M1-TER).
 
-    Para cada bloque: entrena SOLO con filas anteriores al inicio del bloque,
-    pronostica los 7 días de forma recursiva desde ese origen (cada predicción
-    alimenta lags/medias del día siguiente; nunca se usan los valores reales
-    del bloque) y compara con lo real.
-
-    Las filas X/y están alineadas 1:1 con la serie desde WARMUP_DIAS, así que
-    el origen del bloque en la serie es WARMUP_DIAS + filas de entrenamiento.
-
-    Para validación de 14 días = 2 bloques de 7 días.
-
-    Returns:
-        y_pred_bloques: predicciones para los 14 días de validación
-        y_real_bloques: valores reales correspondientes
+    El modelo se entrena UNA vez con las filas anteriores a la ventana de
+    validación. Para cada uno de los 8 orígenes (n-14 ... n-7 en filas de
+    validación): pronóstico recursivo de 7 días con la serie real hasta o-1
+    (función compartida de producción) y suma de esos 7 días; se compara con
+    la suma real de [o, o+6]. Devuelve los 8 totales pronosticados y reales.
     """
     n_val = len(y_val)
     if n_val != VALIDACION_DIAS or len(serie_hist_completa) == 0:
@@ -103,24 +98,22 @@ def evaluar_por_bloques_recursivos(
         modelo.fit(X_train, y_train)
         return modelo.predict(X_val), y_val
 
-    # Origen del bloque 1 en coordenadas de la serie completa
-    origen_serie_b1 = WARMUP_DIAS + len(X_train)
+    # Origen del primer día de validación en coordenadas de la serie completa
+    origen_serie_val = WARMUP_DIAS + len(X_train)
 
-    pronosticos = []
-    X_acum, y_acum = X_train, y_train
-    for b in range(VALIDACION_DIAS // HORIZONTE):
-        inicio = b * HORIZONTE
-        origen = origen_serie_b1 + inicio
-        modelo.fit(X_acum, y_acum)
-        pred_bloque = pronosticar_recursivo(
-            modelo, X_val[inicio], serie_hist_completa[:origen], HORIZONTE
+    modelo.fit(X_train, y_train)
+    totales_pred, totales_real = [], []
+    for o in range(ORIGENES_RODANTES):
+        origen = origen_serie_val + (VALIDACION_DIAS - HORIZONTE - o)
+        pred_7 = pronosticar_recursivo(
+            modelo, X_val[VALIDACION_DIAS - HORIZONTE - o], serie_hist_completa[:origen], HORIZONTE
         )
-        pronosticos.append(pred_bloque)
-        X_acum = np.vstack([X_acum, X_val[inicio : inicio + HORIZONTE]])
-        y_acum = np.concatenate([y_acum, y_val[inicio : inicio + HORIZONTE]])
+        totales_pred.append(float(np.sum(pred_7)))
+        totales_real.append(float(np.sum(serie_hist_completa[origen : origen + HORIZONTE])))
 
-    y_pred = np.concatenate(pronosticos)
-    return y_pred, y_val
+    y_pred = np.array(totales_pred, dtype=np.float64)
+    y_real = np.array(totales_real, dtype=np.float64)
+    return y_pred, y_real
 
 
 def evaluar_suficiencia(
@@ -163,8 +156,9 @@ def evaluar_modelos(
     Evalúa todos los candidatos contra la línea base y selecciona el mejor.
 
     División temporal: últimos 14 días = validación, resto = entrenamiento.
-    Cada bloque de 7 días se pronostica de forma recursiva con el mismo
-    procedimiento de producción (sin usar valores reales del bloque).
+    Sobre esa ventana, 8 orígenes rodantes (o = n-14 ... n-7): cada origen se
+    pronostica de forma recursiva con el mismo procedimiento de producción
+    (sin usar valores reales del bloque) y se compara el total semanal.
     """
     n = len(y)
     idx_val_inicio = n - VALIDACION_DIAS
@@ -188,10 +182,21 @@ def evaluar_modelos(
     )
 
     if not suficiente:
-        y_pred_base = pronosticar_promedio_movil_7(
-            serie_completa[:idx_serie_val], VALIDACION_DIAS
+        base_b1 = pronosticar_promedio_movil_7(serie_completa[:idx_serie_val], HORIZONTE)
+        base_b2 = pronosticar_promedio_movil_7(
+            serie_completa[: idx_serie_val + HORIZONTE], HORIZONTE
         )
-        mae_b, wape_b, nmae_b = calcular_metricas(y_val, y_pred_base)
+        y_pred_base = np.concatenate([base_b1, base_b2])
+        totales_base = np.array(
+            [float(np.sum(y_pred_base[:7])), float(np.sum(y_pred_base[7:]))]
+        )
+        totales_real_insuf = np.array(
+            [
+                float(np.sum(serie_completa[idx_serie_val : idx_serie_val + 7])),
+                float(np.sum(serie_completa[idx_serie_val + 7 : idx_serie_val + 14])),
+            ]
+        )
+        mae_b, wape_b, nmae_b = calcular_metricas(totales_real_insuf, totales_base)
         return ResultadoEvaluacion(
             modelo_seleccionado="promedio_movil",
             metricas_modelo=MetricasValidacion(mae_b, wape_b, nmae_b, dias_venta_val, float(np.mean(y_val))),
@@ -207,24 +212,32 @@ def evaluar_modelos(
     mejor_metricas = None
 
     for clave, modelo in modelos.items():
-        y_pred, _ = evaluar_por_bloques_recursivos(
+        totales_pred, totales_real = evaluar_por_bloques_recursivos(
             modelo, X_train, y_train, X_val, y_val, serie_completa
         )
-        mae, wape, nmae = calcular_metricas(y_val, y_pred)
+        mae, wape, nmae = calcular_metricas(totales_real, totales_pred)
 
         if mae < mejor_mae:
             mejor_mae = mae
             mejor_clave = clave
-            mejor_metricas = MetricasValidacion(mae, wape, nmae, dias_venta_val, float(np.mean(y_val)))
+            mejor_metricas = MetricasValidacion(
+                mae, wape, nmae, dias_venta_val, float(np.mean(totales_real))
+            )
 
-    # Línea base por bloque: media móvil plana de 7 días tomada en cada origen
-    base_b1 = pronosticar_promedio_movil_7(serie_completa[:idx_serie_val], HORIZONTE)
-    base_b2 = pronosticar_promedio_movil_7(
-        serie_completa[: idx_serie_val + HORIZONTE], HORIZONTE
+    # Línea base por origen: media móvil plana de 7 días tomada en cada origen
+    base_totales, reales_base = [], []
+    for o in range(ORIGENES_RODANTES):
+        origen = idx_serie_val + (len(y_val) - HORIZONTE - o)
+        base_totales.append(
+            float(np.sum(pronosticar_promedio_movil_7(serie_completa[:origen], HORIZONTE)))
+        )
+        reales_base.append(float(np.sum(serie_completa[origen : origen + HORIZONTE])))
+    base_totales = np.array(base_totales, dtype=np.float64)
+    totales_real_base = np.array(reales_base, dtype=np.float64)
+    mae_base, wape_base, nmae_base = calcular_metricas(totales_real_base, base_totales)
+    metricas_base = MetricasValidacion(
+        mae_base, wape_base, nmae_base, dias_venta_val, float(np.mean(totales_real_base))
     )
-    y_pred_base = np.concatenate([base_b1, base_b2])
-    mae_base, wape_base, nmae_base = calcular_metricas(y_val, y_pred_base)
-    metricas_base = MetricasValidacion(mae_base, wape_base, nmae_base, dias_venta_val, float(np.mean(y_val)))
 
     if mejor_mae < mae_base:
         return ResultadoEvaluacion(

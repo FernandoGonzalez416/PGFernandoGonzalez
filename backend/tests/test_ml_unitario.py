@@ -214,7 +214,7 @@ def test_evaluacion_por_bloques_recursivos():
     from app.ml.evaluacion import evaluar_por_bloques_recursivos
 
     np.random.seed(42)
-    base = np.array([5, 5, 5, 5, 5, 10, 2] * 15, dtype=np.float64)
+    base = np.array([5, 5, 5, 5, 5, 10, 2] * 17, dtype=np.float64)
     serie = np.maximum(base + np.random.normal(0, 0.5, len(base)), 0)
     fechas = [date(2024, 1, 1) + timedelta(days=i) for i in range(len(serie))]
 
@@ -228,9 +228,11 @@ def test_evaluacion_por_bloques_recursivos():
         modelo, X_train, y_train, X_val, y_val, serie
     )
 
-    assert len(y_pred) == 14  # 2 bloques de 7
-    assert len(y_real) == 14
-    assert np.array_equal(y_real, y_val)
+    assert len(y_pred) == 8  # 8 orígenes rodantes, un total semanal cada uno
+    assert len(y_real) == 8
+    # El último origen (o=7) arranca en la base de la ventana de validación
+    origen_final = WARMUP_DIAS + len(X_train)
+    assert np.isclose(y_real[-1], float(np.sum(serie[origen_final : origen_final + 7])))
     assert np.all(np.isfinite(y_pred))
     # Determinista salvo ruido de punto flotante (RandomForest usa n_jobs=-1):
     # dos corridas dan lo mismo
@@ -248,7 +250,7 @@ def test_bloques_sin_fuga_dentro_del_bloque():
     from app.ml.evaluacion import evaluar_por_bloques_recursivos
 
     np.random.seed(42)
-    base = np.array([5, 5, 5, 5, 5, 10, 2] * 15, dtype=np.float64)
+    base = np.array([5, 5, 5, 5, 5, 10, 2] * 17, dtype=np.float64)
     serie_a = np.maximum(base + np.random.normal(0, 0.5, len(base)), 0)
     fechas = [date(2024, 1, 1) + timedelta(days=i) for i in range(len(serie_a))]
 
@@ -257,8 +259,12 @@ def test_bloques_sin_fuga_dentro_del_bloque():
     X_train, X_val_a = X_a[: n - 14], X_a[n - 14 :]
     y_train, y_val_a = y_a[: n - 14], y_a[n - 14 :]
 
-    # Escenario B: mismos datos hasta el origen del bloque 1, +50 dentro del bloque
-    origen_serie = WARMUP_DIAS + len(X_train)
+    # Escenario B: mismos datos hasta el primer origen (o=0, el más tardío),
+    # +50 solo en su semana real [origen:origen+7]. Los orígenes posteriores
+    # usan historial contaminado por diseño (serie real hasta o-1), así que
+    # solo el primer origen debe coincidir: es la prueba de no fuga.
+    # (los 17 ciclos dan suficiencia: 20+ días con venta en entrenamiento)
+    origen_serie = WARMUP_DIAS + len(X_train) + (14 - 7)
     serie_b = serie_a.copy()
     serie_b[origen_serie : origen_serie + 7] += 50.0
     X_b, y_b, _ = construir_features(serie_b, fechas)
@@ -271,18 +277,19 @@ def test_bloques_sin_fuga_dentro_del_bloque():
         crear_modelos()["random_forest"], X_train, y_train, X_val_b, y_val_b, serie_b
     )
 
-    assert np.allclose(pred_a[:7], pred_b[:7])
+    assert len(pred_a) == 8 and len(pred_b) == 8
+    assert np.isclose(pred_a[0], pred_b[0])
 
 
 def test_bloque_usa_funcion_recursiva_compartida():
-    """El pronóstico del bloque 1 es idéntico al de la función compartida."""
+    """Cada origen semanal es idéntico al de la función compartida."""
     from datetime import date, timedelta
 
-    from app.ml.evaluacion import evaluar_por_bloques_recursivos
-    from app.ml.recursivo import pronosticar_recursivo
+    from app.ml.evaluacion import evaluar_por_bloques_recursivos, ORIGENES_RODANTES
+    from app.ml.recursivo import HORIZONTE, pronosticar_recursivo
 
     np.random.seed(42)
-    base = np.array([5, 5, 5, 5, 5, 10, 2] * 15, dtype=np.float64)
+    base = np.array([5, 5, 5, 5, 5, 10, 2] * 17, dtype=np.float64)
     serie = np.maximum(base + np.random.normal(0, 0.5, len(base)), 0)
     fechas = [date(2024, 1, 1) + timedelta(days=i) for i in range(len(serie))]
 
@@ -290,7 +297,7 @@ def test_bloque_usa_funcion_recursiva_compartida():
     n = len(y)
     X_train, X_val = X[: n - 14], X[n - 14 :]
     y_train, y_val = y[: n - 14], y[n - 14 :]
-    origen_serie = WARMUP_DIAS + len(X_train)
+    origen_serie_val = WARMUP_DIAS + len(X_train)
 
     pred_bloques, _ = evaluar_por_bloques_recursivos(
         crear_modelos()["random_forest"], X_train, y_train, X_val, y_val, serie
@@ -298,11 +305,13 @@ def test_bloque_usa_funcion_recursiva_compartida():
 
     modelo_directo = crear_modelos()["random_forest"]
     modelo_directo.fit(X_train, y_train)
-    pred_directo = pronosticar_recursivo(
-        modelo_directo, X_val[0], serie[:origen_serie]
-    )
-
-    assert np.allclose(pred_bloques[:7], pred_directo)
+    for o in range(ORIGENES_RODANTES):
+        fila = 14 - HORIZONTE - o
+        origen = origen_serie_val + (14 - HORIZONTE - o)
+        pred_directo = pronosticar_recursivo(
+            modelo_directo, X_val[fila], serie[:origen]
+        )
+        assert np.allclose(pred_bloques[o], float(np.sum(pred_directo)))
 
 
 def test_pronostico_recursivo_no_colapsa_a_ultimo_valor():
@@ -330,6 +339,98 @@ def test_pronostico_recursivo_no_colapsa_a_ultimo_valor():
     assert len(pronostico) == 7
     assert np.all(pronostico >= 0)
     assert not np.allclose(pronostico, serie[-1])
+
+
+def test_pronostico_semanal_no_colapsa_en_demanda_intermitente():
+    """Regresión M1-TER: con >60% de ceros y semanal estable, 0.5x <= D <= 1.5x."""
+    from datetime import date, timedelta
+
+    from app.ml.pronostico import generar_pronostico_completo
+
+    np.random.seed(7)
+    # ~5 unidades/semana concentradas en 1-2 días (intermitente, semanal estable)
+    serie = np.zeros(119, dtype=np.float64)
+    dias_con_venta = np.random.choice(119, size=35, replace=False)
+    for d in dias_con_venta:
+        serie[d] = float(np.random.choice([1, 2]))
+    assert float(np.mean(serie == 0)) > 0.60
+    fechas = [date(2024, 1, 1) + timedelta(days=i) for i in range(len(serie))]
+
+    X, y, _ = construir_features(serie, fechas)
+    resultado = evaluar_modelos(X, y, serie, fechas)
+
+    assert resultado.suficiente
+    pronostico, demanda, *_ = generar_pronostico_completo(resultado, X, y, serie)
+    media_semanal = float(np.sum(serie[-28:]) / 4.0)
+    assert media_semanal > 0
+    assert 0.5 * media_semanal <= demanda <= 1.5 * media_semanal
+
+
+def test_origen_sin_fuga_posterior():
+    """Cambiar valores reales posteriores al origen no altera su pronóstico."""
+    from datetime import date, timedelta
+
+    from app.ml.recursivo import pronosticar_recursivo
+
+    np.random.seed(42)
+    base = np.array([5, 5, 5, 5, 5, 10, 2] * 15, dtype=np.float64)
+    serie_a = np.maximum(base + np.random.normal(0, 0.5, len(base)), 0)
+    fechas = [date(2024, 1, 1) + timedelta(days=i) for i in range(len(serie_a))]
+
+    X_a, y_a, _ = construir_features(serie_a, fechas)
+    n = len(y_a)
+    X_train, X_val = X_a[: n - 14], X_a[n - 14 :]
+    y_train = y_a[: n - 14]
+    origen = WARMUP_DIAS + len(X_train) + 3  # cuarto origen semanal
+
+    modelo = crear_modelos()["random_forest"]
+    modelo.fit(X_train, y_train)
+    pred_a = pronosticar_recursivo(modelo, X_val[14 - 7 - 3], serie_a[:origen])
+
+    serie_b = serie_a.copy()
+    serie_b[origen : origen + 7] += 50.0
+    modelo_b = crear_modelos()["random_forest"]
+    modelo_b.fit(X_train, y_train)
+    pred_b = pronosticar_recursivo(modelo_b, X_val[14 - 7 - 3], serie_b[:origen])
+
+    assert np.allclose(pred_a, pred_b)
+
+
+def test_seleccion_semanal_no_premia_modelo_de_ceros():
+    """El MAE diario favorecería al modelo de ceros; el semanal no."""
+    from datetime import date, timedelta
+
+    # Serie intermitente (~75% ceros): picos de 4 cada 4 días, total semanal
+    # estable en 7. Un modelo de ceros tendría MAE diario bajo pero MAE
+    # semanal = 7; la selección semanal no lo premia.
+    serie = np.zeros(119, dtype=np.float64)
+    serie[3::4] = 4.0
+    fechas = [date(2024, 1, 1) + timedelta(days=i) for i in range(len(serie))]
+
+    X, y, _ = construir_features(serie, fechas)
+    resultado = evaluar_modelos(X, y, serie, fechas)
+
+    assert resultado.suficiente
+    # La selección se decide con MAE semanal: documenta cuál ganó aquí
+    assert resultado.modelo_seleccionado in (
+        "random_forest",
+        "hist_gradient_boosting",
+        "ridge",
+        "promedio_movil",
+    )
+    # Un predictor que siempre da cero tendría MAE semanal = media de los
+    # totales reales; el MAE diario lo favorecería (75% de días en cero),
+    # pero la selección semanal exige vencer a la base con totales.
+    idx_serie_val = 14 + (len(y) - 14)
+    reales = np.array(
+        [
+            float(np.sum(serie[idx_serie_val + (14 - 7 - o) : idx_serie_val + (14 - 7 - o) + 7]))
+            for o in range(8)
+        ]
+    )
+    mae_ceros = float(np.mean(np.abs(reales)))
+    assert mae_ceros > 0
+    assert resultado.metricas_modelo.mae <= mae_ceros
 
 
 if __name__ == "__main__":

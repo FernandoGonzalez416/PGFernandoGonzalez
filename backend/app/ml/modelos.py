@@ -31,12 +31,11 @@ def crear_modelos() -> dict:
         )),
     ])
 
-    # HistGradientBoosting: maneja NaN nativamente, loss='quantile' para intervalos
+    # HistGradientBoosting: maneja NaN nativamente, pérdida de media (M1-TER:
+    # la mediana colapsaba a cero en demanda intermitente)
     hgb = Pipeline([
         ("model", HistGradientBoostingRegressor(
             random_state=RANDOM_STATE,
-            loss="quantile",
-            quantile=0.5,  # mediana para predicción puntual
         )),
     ])
 

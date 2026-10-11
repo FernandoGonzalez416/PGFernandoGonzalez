@@ -940,6 +940,23 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 
 ---
 
+## M1-TER. Demanda semanal acumulada y pérdida de media (2026-10-11)
+
+> **Desviación autorizada de P3a y P13** (criterio de selección y métricas).
+
+Motivo: el MAE diario favorece pronósticos de cero en demanda intermitente (11 productos con demanda 0.00 aun con ventas recientes) y la decisión de compra depende del total semanal, no del día exacto.
+
+Cambios respecto a M1:
+
+1. **HistGradientBoostingRegressor con pérdida por defecto (`squared_error`)** en vez de `loss='quantile'` (mediana). La mediana colapsaba a cero en series intermitentes. RandomForest y Ridge no cambian. Candidatos, `n_estimators`, umbrales de suficiencia y regla "solo se despliega si vence a la línea base" no cambian.
+2. **Evaluación por demanda semanal acumulada con orígenes rodantes**: el candidato se entrena UNA vez con las filas anteriores a la ventana de validación (últimos 14 días). Para cada uno de los 8 orígenes o = n-14 ... n-7: pronóstico recursivo de 7 días con la serie real hasta o-1 (función compartida `recursivo.py`) y suma de esos 7 días, contra la suma real de [o, o+6]. Línea base en el mismo origen: media móvil de 7 días × 7. Métricas sobre los 8 totales: MAE_semanal (unidades/semana), WAPE_semanal = suma|error| / suma real, nMAE = MAE_semanal / demanda semanal media. Selección: MAE_semanal_modelo < MAE_semanal_base.
+3. **Persistencia**: `mae_validacion` y `mae_linea_base` pasan a ser MAE semanal; `wape_validacion` y `nmae` coherentes. Reentrenamiento final, pronóstico de 7 días, suficiencia y confianza no cambian.
+4. **Frontend**: solo etiquetas ("MAE" → "Error semanal medio (unidades)"), sin cambios de lógica.
+
+Las mejoras de la evaluación anterior (media de 22.6 %) quedan **superadas** por esta métrica: no son comparables con las nuevas (media de 47.2 % sobre MAE semanal, N=17).
+
+---
+
 ## B5. Comprobante de venta en HTML imprimible, sin dependencias nuevas (APROBADO — 2026-10-07)
 
 > **Resuelve la decisión bloqueante B5** del plan `backend/docs/PLAN_FASE3_4.md` (§3) y habilita el comprobante de la Fase E. Opción (a) del plan.

@@ -148,7 +148,7 @@ export function Predicciones() {
                       <th>Código</th>
                       <th>Método</th>
                       <th>Demanda 7 días</th>
-                      <th>MAE modelo / base</th>
+                      <th>Error semanal medio (unidades), modelo / base</th>
                       <th>Mejora</th>
                       <th>Confianza</th>
                       <th>Obs. usadas</th>
@@ -173,7 +173,7 @@ export function Predicciones() {
                             </span>
                           )}
                         </td>
-                        <td data-label="MAE modelo / base">
+                        <td data-label="Error semanal medio (unidades), modelo / base">
                           {p.mae_validacion !== null ? formatCantidad(p.mae_validacion) : '—'}
                           {p.mae_linea_base !== null && p.mae_validacion !== null && (
                             <span className="muted"> / {formatCantidad(p.mae_linea_base)}</span>
@@ -492,11 +492,11 @@ function DetallePrediccion({
               <p className="valor-grande"><PillConfianza nivel={prediccion.nivel_confianza} /></p>
             </article>
             <article className="card info-card">
-              <h4>MAE del modelo</h4>
+              <h4>Error semanal medio (unidades) del modelo</h4>
               <p className="valor-grande">{prediccion.mae_validacion !== null ? formatCantidad(prediccion.mae_validacion) : '—'}</p>
             </article>
             <article className="card info-card">
-              <h4>MAE línea base</h4>
+              <h4>Error semanal medio (unidades) línea base</h4>
               <p className="valor-grande">{prediccion.mae_linea_base !== null ? formatCantidad(prediccion.mae_linea_base) : '—'}</p>
             </article>
             <article className="card info-card">
