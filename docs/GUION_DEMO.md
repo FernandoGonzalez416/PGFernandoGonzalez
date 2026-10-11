@@ -6,6 +6,17 @@
 
 ---
 
+## Antes de exponer
+
+Lista de verificación previa a la exposición (si algo falla aquí, la demo falla en vivo):
+
+1. **Reloj de Windows sincronizado**: Configuración → Hora e idioma → Fecha y hora; activar "Establecer la hora automáticamente" y la zona horaria automática (UTC-06:00, América Central); pulsar "Sincronizar ahora". Comparar con https://time.is: la diferencia debe ser de segundos. Un reloj atrasado invalida los tokens de Supabase (401 en toda la API) y no se compensa en el backend.
+2. **Levantar backend y frontend**: backend `uvicorn app.main:app --reload --port 8000`; frontend `npm run dev`.
+3. **Comprobar `/health`**: abrir `http://127.0.0.1:8000/health` (debe responder 200) antes de seguir.
+4. **Entrar como administrador** (`fer@gmail.com`, sección 2) y abrir **Predicción de demanda**.
+
+---
+
 ## 1. Preparación previa
 
 | Elemento | Detalle |
