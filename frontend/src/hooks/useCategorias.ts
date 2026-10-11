@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { limpiarCacheApi } from '../api/client'
 import type { CategoriaRead } from '../api/types'
 import { mensajeDeError } from '../lib/errores'
 import { listarCategorias } from '../services/catalogo'
@@ -9,6 +10,7 @@ export function useCategorias(incluirInactivas = false) {
   const [error, setError] = useState<string | null>(null)
 
   const recargar = useCallback(async () => {
+    limpiarCacheApi()
     setCargando(true)
     setError(null)
     try {

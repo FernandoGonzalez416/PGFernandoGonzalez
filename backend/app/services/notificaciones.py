@@ -29,15 +29,18 @@ async def listar_notificaciones(
     if leida is not None:
         where.append("leida = :leida")
         params["leida"] = leida
-    sql = "SELECT id, tipo, mensaje, usuario_id, leida, fecha FROM notificacion"
+    sql = "SELECT id, tipo, mensaje, usuario_id, leida, fecha, COUNT(*) OVER() AS total FROM notificacion"
     if where:
         sql += " WHERE " + " AND ".join(where)
     sql += " ORDER BY fecha DESC OFFSET :off LIMIT :lim"
     filas = await sesion.execute(text(sql), params)
-    items = [dict(f) for f in filas.mappings()]
-    total_where = " WHERE " + " AND ".join(where) if where else ""
-    total_q = await sesion.execute(text("SELECT COUNT(*) FROM notificacion" + total_where), {k: v for k, v in params.items() if k != "lim" and k != "off"})
-    return {"items": items, "total": int(total_q.scalar() or 0)}
+    items = []
+    total = 0
+    for f in filas.mappings():
+        fila = dict(f)
+        total = int(fila.pop("total") or 0)
+        items.append(fila)
+    return {"items": items, "total": total}
 
 
 async def marcar_notificacion_leida(

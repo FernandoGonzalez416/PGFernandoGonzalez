@@ -305,7 +305,8 @@ async def listar_sugerencias(
     base = (
         "SELECT s.id, s.producto_id, s.prediccion_id, s.cantidad_sugerida, "
         "s.prioridad, s.estado, s.stock_proyectado, "
-        "s.demanda_pronosticada, s.fecha, p.codigo AS codigo, p.nombre AS nombre "
+        "s.demanda_pronosticada, s.fecha, p.codigo AS codigo, p.nombre AS nombre, "
+        "COUNT(*) OVER() AS total "
         "FROM sugerencia s LEFT JOIN producto p ON p.id = s.producto_id"
     )
     params: dict[str, Any] = {"lim": limite, "off": desplazamiento}
@@ -316,12 +317,12 @@ async def listar_sugerencias(
     sql = f"{base}{where} ORDER BY s.fecha DESC OFFSET :off LIMIT :lim"
     filas = await sesion.execute(text(sql), params)
     items: list[dict[str, Any]] = []
+    total = 0
     for f in filas.mappings():
-        items.append(dict(f, producto=None))
-    total_sql = "SELECT COUNT(*) FROM sugerencia s" + where
-    tparams = {"estado": estado} if estado else {}
-    total_q = await sesion.execute(text(total_sql), tparams)
-    return {"items": items, "total": int(total_q.scalar() or 0)}
+        fila = dict(f)
+        total = int(fila.pop("total") or 0)
+        items.append(dict(fila, producto=None))
+    return {"items": items, "total": total}
 
 
 async def actualizar_sugerencia(

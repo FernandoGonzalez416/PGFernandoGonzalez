@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { limpiarCacheApi } from '../api/client'
 import type { VentaRead } from '../api/types'
 import { mensajeDeError } from '../lib/errores'
 import { listarVentas } from '../services/ventas'
@@ -13,7 +14,7 @@ export function useVentas(tamanoPagina = 20) {
 
   const desplazamiento = pagina * tamanoPagina
 
-  const recargar = useCallback(() => setRefresco((valor) => valor + 1), [])
+  const recargar = useCallback(() => { limpiarCacheApi(); setRefresco((valor) => valor + 1) }, [])
 
   useEffect(() => {
     let activo = true

@@ -23,6 +23,30 @@ export function configurarAutenticacion(configuracion: ConfiguracionAutenticacio
   alExpirarSesion = configuracion.alExpirarSesion
 }
 
+/**
+ * Caché de lecturas (SWR mínima): las respuestas GET se reutilizan durante
+ * `TTL_CACHE_MS` y las peticiones GET idénticas en vuelo comparten una sola
+ * promesa. Así el doble montaje de StrictMode, reabrir la campana o volver a
+ * una vista no disparan peticiones repetidas a Supabase. Cualquier escritura
+ * (POST/PATCH/PUT/DELETE) invalida toda la caché.
+ */
+const TTL_CACHE_MS = 20_000
+
+type EntradaCache = { expira: number; datos: unknown }
+
+const cacheLecturas = new Map<string, EntradaCache>()
+const peticionesEnVuelo = new Map<string, Promise<unknown>>()
+
+export function limpiarCacheApi(): void {
+  cacheLecturas.clear()
+  peticionesEnVuelo.clear()
+}
+
+function clonarParaLectura<T>(datos: T): T {
+  if (typeof structuredClone === 'function') return structuredClone(datos)
+  return JSON.parse(JSON.stringify(datos)) as T
+}
+
 function esObjeto(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === 'object' && valor !== null
 }
@@ -80,24 +104,60 @@ export async function apiFetch<T>(ruta: string, opciones: RequestInit = {}): Pro
   }
   if (token !== null && token !== '') cabeceras.set('Authorization', `Bearer ${token}`)
 
-  let respuesta: Response
+  const metodo = opciones.method?.toUpperCase() ?? 'GET'
+  const url = `${API_URL}${ruta}`
+  const esLectura = metodo === 'GET'
+  const clave =
+    esLectura ? `${metodo} ${url} ${token !== null && token !== '' ? token.slice(-12) : 'sin-token'}` : ''
+
+  if (esLectura) {
+    const entrada = cacheLecturas.get(clave)
+    if (entrada !== undefined && entrada.expira > Date.now()) {
+      return clonarParaLectura(entrada.datos as T)
+    }
+    const enVuelo = peticionesEnVuelo.get(clave)
+    if (enVuelo !== undefined) {
+      return clonarParaLectura((await enVuelo) as T)
+    }
+  }
+
+  const peticion = (async (): Promise<T> => {
+    let respuesta: Response
+    try {
+      respuesta = await fetch(url, { ...opciones, headers: cabeceras })
+    } catch {
+      throw new ApiError(0, 'No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.')
+    }
+
+    if (respuesta.status === 401) {
+      await alExpirarSesion()
+      throw new ApiError(401, mensajePorEstado(401))
+    }
+
+    if (!respuesta.ok) {
+      throw new ApiError(respuesta.status, await extraerMensaje(respuesta))
+    }
+
+    if (respuesta.status === 204) return undefined as T
+
+    const datos: unknown = await respuesta.json()
+    return datos as T
+  })()
+
+  if (!esLectura) {
+    try {
+      return await peticion
+    } finally {
+      limpiarCacheApi()
+    }
+  }
+
+  peticionesEnVuelo.set(clave, peticion)
   try {
-    respuesta = await fetch(`${API_URL}${ruta}`, { ...opciones, headers: cabeceras })
-  } catch {
-    throw new ApiError(0, 'No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.')
+    const datos = await peticion
+    cacheLecturas.set(clave, { expira: Date.now() + TTL_CACHE_MS, datos })
+    return clonarParaLectura(datos)
+  } finally {
+    peticionesEnVuelo.delete(clave)
   }
-
-  if (respuesta.status === 401) {
-    await alExpirarSesion()
-    throw new ApiError(401, mensajePorEstado(401))
-  }
-
-  if (!respuesta.ok) {
-    throw new ApiError(respuesta.status, await extraerMensaje(respuesta))
-  }
-
-  if (respuesta.status === 204) return undefined as T
-
-  const datos: unknown = await respuesta.json()
-  return datos as T
 }

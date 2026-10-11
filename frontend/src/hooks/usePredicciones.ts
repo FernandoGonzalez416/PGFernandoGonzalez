@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { limpiarCacheApi } from '../api/client'
 import type { PrediccionRead, SerieResponse } from '../api/types'
 import { mensajeDeError } from '../lib/errores'
 import { listarPredicciones, obtenerSeriePrediccion } from '../services/predicciones'
@@ -9,7 +10,7 @@ export function usePredicciones() {
   const [error, setError] = useState<string | null>(null)
   const [refresco, setRefresco] = useState(0)
 
-  const recargar = useCallback(() => setRefresco((v) => v + 1), [])
+  const recargar = useCallback(() => { limpiarCacheApi(); setRefresco((v) => v + 1) }, [])
 
   useEffect(() => {
     let activo = true

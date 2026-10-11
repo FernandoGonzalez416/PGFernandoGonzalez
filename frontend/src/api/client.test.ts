@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, apiFetch, configurarAutenticacion } from './client'
+import { ApiError, apiFetch, configurarAutenticacion, limpiarCacheApi } from './client'
 
 function respuesta(cuerpo: unknown, status: number): Response {
   return {
@@ -25,6 +25,7 @@ function fetchFalso(respondedor: () => Response) {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  limpiarCacheApi()
   configurarAutenticacion({ obtenerToken: async () => null, alExpirarSesion: () => {} })
 })
 
@@ -85,5 +86,58 @@ describe('apiFetch', () => {
 
     await expect(apiFetch('/api/me')).rejects.toBeInstanceOf(ApiError)
     expect(alExpirarSesion).toHaveBeenCalledTimes(1)
+  })
+
+  it('reutiliza la caché en GET repetidos dentro del TTL', async () => {
+    const fetchMock = fetchFalso(() => respuesta({ total: 3 }, 200))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const primero = await apiFetch<{ total: number }>('/api/cache-uno')
+    const segundo = await apiFetch<{ total: number }>('/api/cache-uno')
+
+    expect(primero).toEqual({ total: 3 })
+    expect(segundo).toEqual({ total: 3 })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('deduplica GET idénticos en vuelo (doble montaje)', async () => {
+    let llamadas = 0
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(async () => {
+        llamadas += 1
+        await new Promise((resolver) => setTimeout(resolver, 10))
+        return respuesta({ total: 1 }, 200)
+      }),
+    )
+
+    const [a, b] = await Promise.all([
+      apiFetch<{ total: number }>('/api/cache-doble'),
+      apiFetch<{ total: number }>('/api/cache-doble'),
+    ])
+
+    expect(a).toEqual({ total: 1 })
+    expect(b).toEqual({ total: 1 })
+    expect(llamadas).toBe(1)
+  })
+
+  it('invalida la caché después de una escritura', async () => {
+    const fetchMock = fetchFalso(() => respuesta({ ok: true }, 200))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await apiFetch('/api/cache-inv')
+    await apiFetch('/api/cache-inv', { method: 'POST', body: '{}' })
+    await apiFetch('/api/cache-inv')
+
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it('no cachea respuestas con error', async () => {
+    const fetchMock = fetchFalso(() => respuestaSinCuerpo(403))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(apiFetch('/api/cache-error')).rejects.toMatchObject({ status: 403 })
+    await expect(apiFetch('/api/cache-error')).rejects.toMatchObject({ status: 403 })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 })

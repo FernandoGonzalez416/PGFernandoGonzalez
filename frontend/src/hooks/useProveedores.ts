@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { limpiarCacheApi } from '../api/client'
 import type { ProveedorRead } from '../api/types'
 import { mensajeDeError } from '../lib/errores'
 import { listarProveedores } from '../services/catalogo'
@@ -9,6 +10,7 @@ export function useProveedores(incluirInactivos = false) {
   const [error, setError] = useState<string | null>(null)
 
   const recargar = useCallback(async () => {
+    limpiarCacheApi()
     setCargando(true)
     setError(null)
     try {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { limpiarCacheApi } from '../api/client'
 import type { ProductoRead } from '../api/types'
 import { mensajeDeError } from '../lib/errores'
 import { listarProductos } from '../services/catalogo'
@@ -39,6 +40,7 @@ export function useProductos() {
   }, [busqueda, categoriaId, incluirInactivos])
 
   const recargar = useCallback(async () => {
+    limpiarCacheApi()
     setCargando(true)
     setError(null)
     try {

@@ -14,6 +14,15 @@ def _a_bool(valor: str) -> bool:
     return valor.strip().lower() in {"1", "true", "yes", "si", "sí"}
 
 
+def _a_entero(valor: str, por_defecto: int) -> int:
+    """Interpreta una variable de entorno entera; ante basura usa el defecto."""
+    try:
+        numero = int(valor.strip())
+    except (AttributeError, ValueError):
+        return por_defecto
+    return numero if numero > 0 else por_defecto
+
+
 def _a_lista(valor: str) -> list[str]:
     """Separa una variable de entorno por comas, descartando elementos vacíos."""
     return [elemento.strip() for elemento in valor.split(",") if elemento.strip()]
@@ -35,6 +44,8 @@ class Settings:
     CORS_ORIGINS: list[str] = _a_lista(
         os.getenv("CORS_ORIGINS", ORIGENES_CORS_POR_DEFECTO)
     )
+    DB_POOL_SIZE: int = _a_entero(os.getenv("DB_POOL_SIZE", "10"), 10)
+    DB_MAX_OVERFLOW: int = _a_entero(os.getenv("DB_MAX_OVERFLOW", "10"), 10)
 
 
 settings = Settings()
@@ -49,3 +60,5 @@ DATABASE_URL = settings.DATABASE_URL
 ALMACEN_PREDETERMINADO = settings.ALMACEN_PREDETERMINADO
 DATOS_FICTICIOS = settings.DATOS_FICTICIOS
 CORS_ORIGINS = settings.CORS_ORIGINS
+DB_POOL_SIZE = settings.DB_POOL_SIZE
+DB_MAX_OVERFLOW = settings.DB_MAX_OVERFLOW

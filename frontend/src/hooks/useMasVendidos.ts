@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { limpiarCacheApi } from '../api/client'
 import type { ProductoMasVendidoItem } from '../api/types'
 import { mensajeDeError } from '../lib/errores'
 import { listarProductosMasVendidos } from '../services/reportes'
@@ -12,7 +13,7 @@ export function useMasVendidos(limite = 10, dias = 30) {
   const [error, setError] = useState<string | null>(null)
   const [refresco, setRefresco] = useState(0)
 
-  const recargar = useCallback(() => setRefresco((valor) => valor + 1), [])
+  const recargar = useCallback(() => { limpiarCacheApi(); setRefresco((valor) => valor + 1) }, [])
 
   useEffect(() => {
     let activo = true

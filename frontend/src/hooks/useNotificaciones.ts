@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { limpiarCacheApi } from '../api/client'
 import type { NotificacionItem } from '../api/types'
 import { mensajeDeError } from '../lib/errores'
 import { listarNotificaciones, type FiltrosNotificaciones } from '../services/notificaciones'
@@ -13,7 +14,7 @@ export function useNotificaciones(filtros: FiltrosNotificaciones = {}) {
   const [error, setError] = useState<string | null>(null)
   const [refresco, setRefresco] = useState(0)
 
-  const recargar = useCallback(() => setRefresco((valor) => valor + 1), [])
+  const recargar = useCallback(() => { limpiarCacheApi(); setRefresco((valor) => valor + 1) }, [])
 
   useEffect(() => {
     let activo = true

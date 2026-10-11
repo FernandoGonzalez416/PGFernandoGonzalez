@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { limpiarCacheApi } from '../api/client'
 import type { AlertaResumen } from '../api/types'
 import { mensajeDeError } from '../lib/errores'
 import { listarAlertas } from '../services/alertas'
@@ -9,7 +10,7 @@ export function useAlertas() {
   const [error, setError] = useState<string | null>(null)
   const [refresco, setRefresco] = useState(0)
 
-  const recargar = useCallback(() => setRefresco((valor) => valor + 1), [])
+  const recargar = useCallback(() => { limpiarCacheApi(); setRefresco((valor) => valor + 1) }, [])
 
   useEffect(() => {
     let activo = true

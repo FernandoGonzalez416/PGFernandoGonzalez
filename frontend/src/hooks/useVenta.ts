@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { limpiarCacheApi } from '../api/client'
 import type { VentaRead } from '../api/types'
 import { mensajeDeError } from '../lib/errores'
 import { obtenerVenta } from '../services/ventas'
@@ -10,7 +11,7 @@ export function useVenta(ventaId: string | undefined) {
   const [error, setError] = useState<string | null>(idValido ? null : 'No se indicó la venta.')
   const [refresco, setRefresco] = useState(0)
 
-  const recargar = useCallback(() => setRefresco((valor) => valor + 1), [])
+  const recargar = useCallback(() => { limpiarCacheApi(); setRefresco((valor) => valor + 1) }, [])
 
   useEffect(() => {
     if (ventaId === undefined || ventaId === '') return
