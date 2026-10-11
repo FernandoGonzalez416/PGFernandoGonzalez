@@ -23,6 +23,7 @@ const Alertas = lazy(() => import('./pages/Alertas').then((m) => ({ default: m.A
 const Reportes = lazy(() => import('./pages/Reportes').then((m) => ({ default: m.Reportes })))
 const Sugerencias = lazy(() => import('./pages/Sugerencias').then((m) => ({ default: m.Sugerencias })))
 const Notificaciones = lazy(() => import('./pages/Notificaciones').then((m) => ({ default: m.Notificaciones })))
+const Predicciones = lazy(() => import('./pages/Predicciones').then((m) => ({ default: m.Predicciones })))
 
 function Fallback() {
   return <div className="pagina">Cargando...</div>
@@ -126,6 +127,14 @@ function App() {
                       element={
                         <RequireCapacidad capacidad={CAPACIDADES.alertasVer}>
                           <Notificaciones />
+                        </RequireCapacidad>
+                      }
+                    />
+                    <Route
+                      path="/predicciones"
+                      element={
+                        <RequireCapacidad capacidad={CAPACIDADES.prediccionVer}>
+                          <Predicciones />
                         </RequireCapacidad>
                       }
                     />

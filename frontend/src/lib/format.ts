@@ -43,3 +43,14 @@ export function formatFecha(valor: string | null | undefined): string {
     year: 'numeric',
   }).format(fecha)
 }
+
+export function nombreMetodoLegible(metodo: string): string {
+  const mapa: Record<string, string> = {
+    random_forest: 'Random Forest',
+    hist_gradient_boosting: 'Gradient Boosting',
+    ridge: 'Regresión Ridge',
+    promedio_movil: 'Promedio móvil',
+    sin_historial: 'Sin historial',
+  }
+  return mapa[metodo] ?? metodo
+}

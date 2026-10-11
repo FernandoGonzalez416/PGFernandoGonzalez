@@ -1,5 +1,6 @@
 import { TarjetaAlertas } from '../components/panel/TarjetaAlertas'
 import { TarjetaMasVendidos } from '../components/panel/TarjetaMasVendidos'
+import { TarjetaPrediccion } from '../components/panel/TarjetaPrediccion'
 import { TarjetaResumenVentas } from '../components/panel/TarjetaResumenVentas'
 import { TarjetaSugerencias } from '../components/panel/TarjetaSugerencias'
 import { TarjetaUltimasVentas } from '../components/panel/TarjetaUltimasVentas'
@@ -10,6 +11,7 @@ export function Panel() {
   const puedeReportes = useCan(CAPACIDADES.reportesVer)
   const puedeSugerencias = useCan(CAPACIDADES.sugerenciasVer)
   const puedeAlertas = useCan(CAPACIDADES.alertasVer)
+  const puedePredicciones = useCan(CAPACIDADES.prediccionVer)
 
   return (
     <div className="pagina">
@@ -25,6 +27,7 @@ export function Panel() {
         {puedeReportes && <TarjetaMasVendidos enlace="/reportes" />}
         <TarjetaUltimasVentas enlace="/ventas" />
         {puedeSugerencias && <TarjetaSugerencias enlace="/sugerencias" />}
+        {puedePredicciones && <TarjetaPrediccion />}
       </div>
     </div>
   )

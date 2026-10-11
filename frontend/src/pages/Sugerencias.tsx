@@ -6,9 +6,27 @@ import { useSugerencias, type FiltroEstado } from '../hooks/useSugerencias'
 import { useCan } from '../auth/useCan'
 import { actualizarSugerencia, generarSugerencias } from '../services/sugerencias'
 import { useToast } from '../components/ui/ToastProvider'
-import { formatCantidad, formatFecha } from '../lib/format'
+import { formatCantidad, formatFecha, nombreMetodoLegible } from '../lib/format'
 import type { SugerenciaRead } from '../api/types'
 import { mensajeDeError } from '../lib/errores'
+
+function PillConfianza({ nivel }: { nivel: string | null | undefined }) {
+  const clases: Record<string, string> = {
+    simulacion: 'pill pill-confianza-simulacion',
+    baja: 'pill pill-confianza-baja',
+    alta: 'pill pill-confianza-alta',
+  }
+  const etiquetas: Record<string, string> = {
+    simulacion: 'Simulación',
+    baja: 'Baja',
+    alta: 'Alta',
+  }
+  return (
+    <span className={clases[nivel ?? ''] ?? 'pill'}>
+      {etiquetas[nivel ?? ''] ?? nivel ?? '—'}
+    </span>
+  )
+}
 
 export function Sugerencias() {
   const { sugerencias, total, cargando, error, filtro, setFiltro, recargar, irAnterior, irSiguiente, hayMas, pagina } = useSugerencias(20)
@@ -56,7 +74,7 @@ export function Sugerencias() {
           <div>
             <h1>Sugerencias de compra</h1>
             <p className="page-subtitle">
-              Generación: <strong>estimación por promedio móvil de 7 días, confianza baja; el modelo de IA aún no está activo</strong>.
+              Generación: <strong>modelo seleccionado por validación temporal (Random Forest, Gradient Boosting, Ridge vs. promedio móvil); confianza según evidencia P13</strong>.
             </p>
           </div>
           <div className="page-header-acciones">
@@ -103,6 +121,8 @@ export function Sugerencias() {
                   <tr>
                     <th>Producto</th>
                     <th>Código</th>
+                    <th>Método</th>
+                    <th>Confianza</th>
                     <th>Cantidad sugerida</th>
                     <th>Prioridad</th>
                     <th>Demanda / Stock</th>
@@ -115,6 +135,8 @@ export function Sugerencias() {
                     <tr key={s.id}>
                       <td data-label="Producto">{s.nombre ?? '—'}</td>
                       <td data-label="Código">{s.codigo ?? '—'}</td>
+                      <td data-label="Método">{s.metodo ? nombreMetodoLegible(s.metodo) : '—'}</td>
+                      <td data-label="Confianza"><PillConfianza nivel={s.nivel_confianza} /></td>
                       <td data-label="Cantidad sugerida">{formatCantidad(s.cantidad_sugerida)}</td>
                       <td data-label="Prioridad">
                         <span className={`pill pill-prioridad-${s.prioridad}`}>{s.prioridad}</span>

@@ -383,6 +383,47 @@ export interface paths {
         patch: operations["marcar_notificacion_leida_api_notificaciones__notificacion_id__leida_patch"];
         trace?: never;
     };
+    "/api/predicciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Predicciones
+         * @description Última predicción por producto activo (solo admin - Capacidad.PREDICCION_VER).
+         */
+        get: operations["listar_predicciones_api_predicciones_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/predicciones/{producto_id}/serie": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Obtener Serie Prediccion
+         * @description Recalcula la serie y pronóstico SIN persistir.
+         *     Devuelve historial (últimos 60 días), pronóstico (7 días), métricas y diagnóstico.
+         */
+        get: operations["obtener_serie_prediccion_api_predicciones__producto_id__serie_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -567,6 +608,10 @@ export interface components {
             predicciones_creadas: number;
             /** Sugerencias Creadas */
             sugerencias_creadas: number;
+            /** Por Metodo */
+            por_metodo?: {
+                [key: string]: number;
+            };
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -637,6 +682,46 @@ export interface components {
              * Format: date-time
              */
             fecha: string;
+        };
+        /** PrediccionRead */
+        PrediccionRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Producto Id
+             * Format: uuid
+             */
+            producto_id: string;
+            /** Codigo */
+            codigo: string;
+            /** Nombre */
+            nombre: string;
+            /** Metodo */
+            metodo: string;
+            /**
+             * Nivel Confianza
+             * @enum {string}
+             */
+            nivel_confianza: "alta" | "baja" | "simulacion";
+            /** Demanda Pronosticada */
+            demanda_pronosticada: number;
+            /** Intervalo Inf */
+            intervalo_inf: number | null;
+            /** Intervalo Sup */
+            intervalo_sup: number | null;
+            /** Mae Validacion */
+            mae_validacion: number | null;
+            /** Mae Linea Base */
+            mae_linea_base: number | null;
+            /** Mejora Pct */
+            mejora_pct: number | null;
+            /** Observaciones Usadas */
+            observaciones_usadas: number;
+            /** Fecha Generacion */
+            fecha_generacion: string;
         };
         /** ProductoCreate */
         ProductoCreate: {
@@ -887,6 +972,29 @@ export interface components {
             /** Por Dia */
             por_dia: components["schemas"]["ResumenVentaDia"][];
         };
+        /** SerieResponse */
+        SerieResponse: {
+            /** Historial */
+            historial: {
+                [key: string]: unknown;
+            }[];
+            /** Pronostico */
+            pronostico: {
+                [key: string]: unknown;
+            }[];
+            /** Metodo */
+            metodo: string;
+            /** Mae Modelo */
+            mae_modelo: number | null;
+            /** Mae Linea Base */
+            mae_linea_base: number | null;
+            /** Nivel Confianza */
+            nivel_confianza: string;
+            /** Suficiente */
+            suficiente: boolean;
+            /** Motivo */
+            motivo: string | null;
+        };
         /** SugerenciaRead */
         SugerenciaRead: {
             /**
@@ -930,6 +1038,14 @@ export interface components {
             /** Nombre */
             nombre?: string | null;
             producto?: components["schemas"]["ProductoRef"] | null;
+            /** Metodo */
+            metodo?: string | null;
+            /** Nivel Confianza */
+            nivel_confianza?: ("alta" | "baja" | "simulacion") | null;
+            /** Mae Validacion */
+            mae_validacion?: string | null;
+            /** Mae Linea Base */
+            mae_linea_base?: string | null;
         };
         /** SugerenciaUpdate */
         SugerenciaUpdate: {
@@ -1890,6 +2006,57 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_predicciones_api_predicciones_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrediccionRead"][];
+                };
+            };
+        };
+    };
+    obtener_serie_prediccion_api_predicciones__producto_id__serie_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                producto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SerieResponse"];
                 };
             };
             /** @description Validation Error */

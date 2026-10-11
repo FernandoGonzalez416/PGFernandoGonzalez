@@ -6,10 +6,10 @@ import { Sugerencias } from './Sugerencias'
 
 const mocks = vi.hoisted(() => ({
   sugerencias: [
-    { id: 's1', producto_id: 'p1', nombre: 'Labial rojo', codigo: 'SIM-001', cantidad_sugerida: '10', prioridad: 'alta', estado: 'pendiente', stock_proyectado: '5', demanda_pronosticada: '15', fecha: '2026-10-01T00:00:00Z' },
-    { id: 's2', producto_id: 'p2', nombre: 'Crema facial', codigo: 'SIM-002', cantidad_sugerida: '5', prioridad: 'media', estado: 'atendida', stock_proyectado: '10', demanda_pronosticada: '10', fecha: '2026-09-25T00:00:00Z' },
+    { id: 's1', producto_id: 'p1', nombre: 'Labial rojo', codigo: 'SIM-001', cantidad_sugerida: '10', prioridad: 'alta', estado: 'pendiente', stock_proyectado: '5', demanda_pronosticada: '15', fecha: '2026-10-01T00:00:00Z', metodo: 'random_forest', nivel_confianza: 'alta' },
+    { id: 's2', producto_id: 'p2', nombre: 'Crema facial', codigo: 'SIM-002', cantidad_sugerida: '5', prioridad: 'media', estado: 'atendida', stock_proyectado: '10', demanda_pronosticada: '10', fecha: '2026-09-25T00:00:00Z', metodo: 'promedio_movil', nivel_confianza: 'baja' },
   ],
-  generar: { sugerencias_creadas: 3, predicciones_creadas: 2 },
+  generar: { sugerencias_creadas: 3, predicciones_creadas: 2, por_metodo: { random_forest: 1, promedio_movil: 1 } },
   actualizar: { id: 's1', estado: 'atendida' },
   error409: { response: { status: 409, data: { detail: 'Sugerencia no está pendiente' } } },
   perfil: {
@@ -76,9 +76,19 @@ describe('Sugerencias', () => {
     mocks.actualizarError.current = false
   })
 
-  it('muestra el mensaje de confianza baja del modelo', () => {
+  it('muestra el mensaje de modelo seleccionado por validación temporal', () => {
     renderSugerencias()
-    expect(screen.getByText(/estimación por promedio móvil de 7 días, confianza baja/i)).toBeInTheDocument()
+    expect(screen.getByText(/modelo seleccionado por validación temporal/i)).toBeInTheDocument()
+  })
+
+  it('muestra columnas Método y Confianza en la tabla', () => {
+    renderSugerencias()
+    expect(screen.getByText('Método')).toBeInTheDocument()
+    expect(screen.getByText('Confianza')).toBeInTheDocument()
+    expect(screen.getByText('Random Forest')).toBeInTheDocument()
+    expect(screen.getByText('Promedio móvil')).toBeInTheDocument()
+    expect(screen.getByText('Alta')).toBeInTheDocument()
+    expect(screen.getByText('Baja')).toBeInTheDocument()
   })
 
   it('permite atender una sugerencia pendiente', async () => {

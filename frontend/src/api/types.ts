@@ -28,6 +28,12 @@ export type VentaDetalleRead = components['schemas']['VentaDetalleRead']
 export type VentaLineaCreate = components['schemas']['VentaDetalleCreate']
 export type AnulacionCreate = components['schemas']['AnulacionCreate']
 
+// Predicción
+export type PrediccionRead = components['schemas']['PrediccionRead'] & {
+  motivo?: string | null
+}
+export type SerieResponse = components['schemas']['SerieResponse']
+
 export type Capacidad = MeRead['capacidades'][number]
 export type Rol = MeRead['rol']
 

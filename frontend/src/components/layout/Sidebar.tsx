@@ -15,6 +15,7 @@ export function Sidebar({ abierto, onNavegar }: { abierto: boolean; onNavegar: (
   const puedeAlertas = useCan(CAPACIDADES.alertasVer)
   const puedeReportes = useCan(CAPACIDADES.reportesVer)
   const puedeSugerencias = useCan(CAPACIDADES.sugerenciasVer)
+  const puedePredicciones = useCan(CAPACIDADES.prediccionVer)
 
   const grupos: { etiqueta: string; items: ItemNav[] }[] = [
     {
@@ -48,6 +49,7 @@ export function Sidebar({ abierto, onNavegar }: { abierto: boolean; onNavegar: (
         { to: '/alertas', etiqueta: 'Alertas', visible: puedeAlertas },
         { to: '/reportes', etiqueta: 'Reportes', visible: puedeReportes },
         { to: '/sugerencias', etiqueta: 'Sugerencias de compra', visible: puedeSugerencias },
+        { to: '/predicciones', etiqueta: 'Predicción de demanda', visible: puedePredicciones },
         { to: '/notificaciones', etiqueta: 'Notificaciones', visible: puedeAlertas },
       ],
     },
