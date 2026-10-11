@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Literal
+from typing import Dict, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -23,6 +23,10 @@ class SugerenciaRead(BaseModel):
     codigo: str | None = None
     nombre: str | None = None
     producto: ProductoRef | None = None
+    metodo: str | None = None
+    nivel_confianza: Literal['alta', 'baja', 'simulacion'] | None = None
+    mae_validacion: Decimal | None = None
+    mae_linea_base: Decimal | None = None
 
 
 class SugerenciaUpdate(BaseModel):
@@ -34,3 +38,4 @@ class SugerenciaUpdate(BaseModel):
 class GenerarResultado(BaseModel):
     predicciones_creadas: int = Field(ge=0)
     sugerencias_creadas: int = Field(ge=0)
+    por_metodo: Dict[str, int] = Field(default_factory=dict)

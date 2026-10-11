@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from app.api.categorias import router as categorias_router
 from app.api.inventario import router as inventario_router
 from app.api.me import router as me_router
+from app.api.predicciones import router as predicciones_router
 from app.api.productos import router as productos_router
 from app.api.proveedores import router as proveedores_router
 from app.api.ventas import router as ventas_router
@@ -86,6 +87,7 @@ app.include_router(alertas_router, prefix="/api/alertas", tags=["alertas"])
 app.include_router(reportes_router, prefix="/api/reportes", tags=["reportes"])
 app.include_router(sugerencias_router, prefix="/api/sugerencias", tags=["sugerencias"])
 app.include_router(notificaciones_router, prefix="/api/notificaciones", tags=["notificaciones"])
+app.include_router(predicciones_router, prefix="/api", tags=["predicciones"])
 
 
 @app.get("/")

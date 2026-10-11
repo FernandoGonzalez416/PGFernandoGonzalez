@@ -896,6 +896,48 @@ Pendiente de aplicar en la URL (una vez se tenga el Project Ref): `project_ref=<
 - La notificación generada es **una sola por corrida**, tipo `sugerencia_compra` y `usuario_id NULL` (general). Las alertas de stock/vencimiento **no** escriben en `notificacion` en esta fase: siguen bajo demanda desde `GET /api/alertas/*`.
 - **Desviaciones respecto del plan §8** (aplicada la especificación de la Fase D): el plan declara `GET /api/notificaciones` con `SUGERENCIAS_VER`, `POST /api/notificaciones/{id}/leer` y `POST /api/sugerencias/{id}/atender|/descartar`; se implementa `ALERTAS_VER` para notificaciones, `PATCH /api/notificaciones/{id}/leida`, `PATCH /api/sugerencias/{id}` con `{"estado": ...}` y el alta `POST /api/sugerencias/generar` con `PREDICCION_VER`. Las pruebas van en un único `tests/test_fase_d.py`.
 
+> **SUPERADA por M1 (2026-10-10)**: el motor de predicción (Random Forest, HistGradientBoosting, Ridge vs. promedio móvil) se ha implementado y autorizado. La línea base `promedio_movil` se conserva como respaldo y para productos sin historial suficiente. Se añade columna `mae_linea_base` a `prediccion`. Los datos de demostración se amplían a 120 días con perfiles de rotación realistas.
+
+---
+
+## M1. Motor de predicción autorizado (2026-10-10)
+
+> **Autorización explícita del usuario** para implementar el motor de predicción completo según P3/P3a/P13.
+
+### Qué se implementa
+
+1. **Columna `mae_linea_base`** en tabla `prediccion` (migración `15_add_mae_linea_base.sql` y esquema de pruebas actualizado).
+2. **Datos de demostración a 120 días** (`backend/scripts/semilla_demo.py` con `--reset --dias 120`):
+   - 20 productos con 4 perfiles de rotación (alta ~4/día, media ~1.5/día, lenta ~0.4/día, muy lenta ~0.1/día)
+   - Multiplicadores semanales (viernes ×1.3, sábado ×1.6, domingo ×0.8)
+   - Alza mensual ±2 días alrededor del 15 y 30 (+30%)
+   - Tendencia leve al alza (+0.5%/día) y ruido Poisson
+   - Reposición automática por `compra` cuando stock < umbral
+   - Estado final: 4 productos stock ≤ umbral (uno en 0), 2 vencimiento < 10 días, 1 vencido, 3-5 ventas anuladas
+   - Idempotente fuera de `--reset`
+3. **Motor ML puro en `backend/app/ml/`** (solo numpy/scikit-learn, sin acceso a BD):
+   - `serie.py`: serie diaria por producto (ventas activas, hora Guatemala, ceros en días sin venta, hasta AYER)
+   - `features.py`: dow, mes, fin_semana, tendencia, lag1, lag7, media_movil_7, desv_movil_7 (solo histórico, warmup 14 días). Test `validar_sin_fuga`.
+   - `modelos.py`: 3 candidatos en Pipeline (RandomForest n_estimators=200, HistGradientBoosting loss=quantile, Ridge con one-hot + scaling). random_state=42.
+   - `evaluacion.py`: suficiencia P13 (≥75 días calendario, ≥20 días con venta entreno, ≥3 validación). Validación temporal últimos 14 días en 2 bloques recursivos de 7. Métricas: MAE, WAPE (venta>0), nMAE. Selección: menor MAE y SOLO si vence a línea base (promedio móvil 7 días plano).
+   - `pronostico.py`: reentrena ganador con todos los datos, pronóstico recursivo 7 días (trunca negativos). Intervalo aprox [D ± 1.28×MAE×√7] (documentado como aproximación).
+   - `confianza.py`: 'alta' solo si suficiencia + vence base + nMAE<1.0 + datos reales; 'simulacion' si DATOS_FICTICIOS; 'baja' resto. Función pura con tabla de casos.
+   - Todo síncrono: se invoca con `run_in_threadpool`.
+4. **Integración en `sugerencias.py`**: `generar_sugerencias` usa motor por producto activo con historial; persiste método real, confianza, demanda, intervalos, MAE, WAPE, nMAE, `mae_linea_base`, observaciones, `datos_ficticios`. Productos sin ventas: método `sin_historial` (P3a punto 17). Respuesta `POST /api/sugerencias/generar` incluye `por_metodo`.
+5. **Schemas actualizados**: `SugerenciaRead` añade `metodo`, `nivel_confianza`, `mae_validacion`, `mae_linea_base`. `GenerarResultado` añade `por_metodo`.
+6. **Endpoints nuevos**:
+   - `GET /api/predicciones` (Capacidad.PREDICCION_VER, solo admin): última predicción por producto activo con código, nombre, método, confianza, demanda, intervalos, MAE, `mae_linea_base`, `mejora_pct`, observaciones, fecha.
+   - `GET /api/predicciones/{producto_id}/serie` (PREDICCION_VER): recalcula sin persistir; devuelve historial 60 días, pronóstico 7 días, método, MAEs, confianza, `suficiente`, `motivo` (texto si cae a línea base).
+7. **Tests**:
+   - Unitarios (11): sin fuga features; 74 días→línea base; 75 días+densidad→modelo; <20 días venta→línea base; solo despliega si vence base; tabla confianza; pronóstico 7 días sin negativos; determinismo; sanidad estacionalidad vence base.
+   - Integración (8 en `test_fase_d.py`): generar con 120 días produce métodos ≠ promedio_movil y persiste `mae_linea_base`; propietario→403; `/serie` devuelve 7 días pronóstico + 60 historial.
+
+### Dependencias
+- SOLO `scikit-learn==1.9.1`, `numpy`, `scipy` (ya instalados). Prohibido `pandas`. Semilla fija `random_state=42`.
+
+### Estado
+**IMPLEMENTADO Y AUTORIZADO**. La decisión B6 queda superada; la línea base `promedio_movil` se conserva como respaldo.
+
 ---
 
 ## B5. Comprobante de venta en HTML imprimible, sin dependencias nuevas (APROBADO — 2026-10-07)
