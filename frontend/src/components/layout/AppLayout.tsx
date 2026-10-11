@@ -37,7 +37,7 @@ export function AppLayout() {
         <div className="scrim" role="presentation" onClick={() => setMenuAbierto(false)} />
       )}
       <div className="main-column">
-        <Topbar onAbrirMenu={() => setMenuAbierto(true)} />
+        <Topbar />
         <main className="content">
           <div className="content-inner">
             <BarraDemo />

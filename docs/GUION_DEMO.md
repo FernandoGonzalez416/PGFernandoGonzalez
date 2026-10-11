@@ -2,7 +2,7 @@
 
 **Proyecto:** Plataforma inteligente basada en la nube con capacidad offline para la gestión de inventarios y reabastecimiento en tiendas cosméticas
 **Caso de estudio:** Familia de la Cruz — Villa Nueva, Guatemala
-**Versión:** F3 (Panel, Alertas, Reportes, Sugerencias, Notificaciones)
+**Versión:** F4 (Panel, Alertas, Reportes, Sugerencias, Notificaciones, **Predicción de demanda**)
 
 ---
 
@@ -64,15 +64,30 @@
 ### 3.4 Sugerencias de compra (2.5 min)
 
 1. Ir a **Sugerencias** (`/sugerencias`) como **Admin** (`fer@gmail.com`)
-2. Mensaje fijo visible: *"Estimación por promedio móvil de 7 días, confianza baja; el modelo de IA aún no está activo."*
-3. Botón **"Generar sugerencias"** (requiere `prediccion:ver`) → toast "Sugerencias generadas: N (predicciones: M)"
+2. Mensaje fijo visible: *"Generación: modelo seleccionado por validación temporal (Random Forest, Gradient Boosting, Ridge vs. promedio móvil); confianza según evidencia P13."*
+3. Botón **"Generar sugerencias"** (requiere `prediccion:ver`) → toast "Sugerencias generadas: N (predicciones: M) por_metodo: {...}"
 4. Filtro estado: Pendientes / Atendidas / Descartadas / Todas
-5. Tabla: producto, código, cantidad sugerida, prioridad (píldora), demanda/stock, fecha, acciones
+5. Tabla: producto, código, **Método** (Random Forest, Gradient Boosting, Regresión Ridge, Promedio móvil), **Confianza** (píldora: Simulación/Baja/Alta), cantidad sugerida, prioridad, demanda/stock, fecha, acciones
 6. **Atender** / **Descartar** (requiere `sugerencias:atender`) → toast confirmación
 7. Intentar atender una ya atendida → error 409 toast *"Sugerencia no está pendiente"*
 8. Cambiar a **Propietario** → botón "Generar" **no visible**, pero puede Atender/Descartar
 
-### 3.5 Notificaciones y Campana (1.5 min)
+### 3.5 Predicción de demanda (2 min)
+
+1. Ir a **Predicción de demanda** (`/predicciones`) como **Admin** (`fer@gmail.com`)
+   - *Solo visible en sidebar para rol con `prediccion:ver` (Admin)*
+2. **Aviso fijo visible**: *"Datos de simulación: la precisión mostrada valida el funcionamiento del modelo, no su desempeño real en el negocio. Con historial real el modelo se recalibra (P13)."*
+3. **Resumen superior**: tarjetas con "Productos con modelo ML", "Productos en línea base", "Mejora media vs. línea base"
+4. **Tabla** con columnas: Producto, Código, Método, Demanda 7 días (con intervalo), MAE modelo/base, Mejora %, Confianza (píldora), Obs. usadas
+5. **Click en fila** → panel lateral de detalle:
+   - Gráfico SVG: historial 60 días (línea continua) + pronóstico 7 días (línea punteada) + banda de intervalo
+   - Ejes rotulados, descripción para lector de pantalla, tabla alternativa accesible
+   - Tarjetas: Modelo elegido, MAE modelo, MAE línea base, Mejora vs. base, Obs. usadas
+   - Si cayó a línea base: motivo en lenguaje llano (ej. "el modelo no supera a la línea base")
+6. Botón **"Actualizar predicciones"** → llama a `POST /api/sugerencias/generar`, muestra toast con conteo por método, recarga tabla
+7. Cambiar a **Propietario** → opción "Predicción de demanda" **no aparece** en sidebar
+
+### 3.6 Notificaciones y Campana (1.5 min)
 
 1. Click en **campana** (🔔) en Topbar → panel con badge contador
 2. Lista: tipo, mensaje, fecha; click en item → marca leída, badge decrementa
@@ -83,7 +98,7 @@
 
 ### 3.6 Navegación y UX (1 min)
 
-1. **Sidebar** (colapsable en móvil): 4 grupos — Inicio, Catálogo, Ventas, Inventario, Análisis
+1. **Sidebar** (colapsable en móvil): 5 grupos — Inicio, Catálogo, Ventas, Inventario, Análisis (ahora incluye **Predicción de demanda** y Notificaciones)
 2. **Títulos de página** en AppLayout: Panel, Productos, Ventas, Alertas, Reportes, Sugerencias, Notificaciones
 3. **Responsive**: redimensionar <768px → tablas a tarjetas, sidebar off-canvas
 4. **Toolbar Productos**: "Nuevo producto" no tapa el buscador en móvil (flex-wrap)
@@ -124,7 +139,7 @@
 
 | Item | Descripción |
 |------|-------------|
-| IA predicción | No implementada — mensaje fijo "promedio móvil 7 días, confianza baja" |
+| IA predicción | Implementada (Random Forest, Gradient Boosting, Ridge vs. promedio móvil, validación temporal, confianza por evidencia P13) |
 | Offline/PWA | No implementado en F3 (arquitectura preparada) |
 | App móvil | Fuera de alcance (React Native fase posterior) |
 | VentaDetalle anulable | Botón "Anular" usa estado `'registrada'` vs real `'activa'` (discrepancia F2) |

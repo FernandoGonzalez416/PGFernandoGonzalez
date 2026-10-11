@@ -4,7 +4,7 @@ import { CampanaNotificaciones } from '../notificaciones/CampanaNotificaciones'
 export function Topbar() {
   const { perfil, cerrarSesion } = useAuth()
 
-  const nombre = perfil?.nombre_completo ?? perfil?.nombre_usuario ?? 'Usuario'
+  const nombre = perfil?.nombre ?? 'Usuario'
   const rol = perfil?.rol
 
   return (
