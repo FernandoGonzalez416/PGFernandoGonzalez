@@ -205,7 +205,10 @@ export interface paths {
         /** Listar Ventas */
         get: operations["listar_ventas_api_ventas_get"];
         put?: never;
-        /** Registrar Venta */
+        /**
+         * Registrar Venta
+         * @description Registra la venta. Una repetición idempotente responde 200, no 201 (P27/F5).
+         */
         post: operations["registrar_venta_api_ventas_post"];
         delete?: never;
         options?: never;
@@ -1074,6 +1077,14 @@ export interface components {
          *
          *     El precio no viaja en el request: lo lee el backend de
          *     `producto.precio_venta` dentro de la transacción (regla 5 del plan).
+         *
+         *     client_request_id: UUID generado por el cliente (POS offline) para
+         *     reintentos idempotentes. Si ya existe, el servicio NO crea nada y
+         *     devuelve la venta existente.
+         *
+         *     fecha: fecha/hora de la venta. Debe ser <= ahora y no más de 72 horas
+         *     atrás; si no, 422. Si viene fecha, venta.fecha y sus movimientos de
+         *     inventario la usan. El folio sigue saliendo del servicio como siempre.
          */
         VentaCreate: {
             /** Lineas */
@@ -1091,6 +1102,10 @@ export interface components {
             metodo_pago: "efectivo" | "tarjeta" | "transferencia" | "otro";
             /** Cliente Id */
             cliente_id?: string | null;
+            /** Client Request Id */
+            client_request_id?: string | null;
+            /** Fecha */
+            fecha?: string | null;
         };
         /** VentaDetalleCreate */
         VentaDetalleCreate: {
@@ -1153,6 +1168,8 @@ export interface components {
             motivo_anulacion: string | null;
             /** Lineas */
             lineas: components["schemas"]["VentaDetalleRead"][];
+            /** Client Request Id */
+            client_request_id?: string | null;
         };
     };
     responses: never;

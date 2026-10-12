@@ -2,7 +2,7 @@ from typing import Annotated
 from datetime import date, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.capacidades import Capacidad
@@ -68,8 +68,13 @@ async def registrar_venta(
     usuario: Annotated[
         UsuarioAutenticado, Depends(requiere(Capacidad.VENTAS_REGISTRAR))
     ],
+    respuesta: Response,
 ) -> VentaRead:
-    return await servicio.registrar_venta(sesion, datos, usuario.id)
+    """Registra la venta. Una repetición idempotente responde 200, no 201 (P27/F5)."""
+    resultado = await servicio.registrar_venta(sesion, datos, usuario.id)
+    if not resultado.creada:
+        respuesta.status_code = 200
+    return resultado.venta
 
 
 @router.post("/{venta_id}/anular", response_model=VentaRead)

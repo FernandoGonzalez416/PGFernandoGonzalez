@@ -517,7 +517,7 @@ async def _sembrar(sesion, dias: int, reset: bool, autor_admin: UUID, usuario_id
                 else Decimal("0.00")
             )
             autor = random.choice(usuario_ids)
-            venta = await registrar_venta(
+            resultado_venta = await registrar_venta(
                 sesion,
                 VentaCreate(
                     lineas=lineas,
@@ -529,7 +529,7 @@ async def _sembrar(sesion, dias: int, reset: bool, autor_admin: UUID, usuario_id
             )
             ventas.append(
                 {
-                    "id": venta.id,
+                    "id": resultado_venta.venta.id,
                     "dia": dia,
                     "usuario_id": autor,
                     "rol": roles_por_usuario[autor],

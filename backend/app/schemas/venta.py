@@ -20,6 +20,14 @@ class VentaCreate(BaseModel):
 
     El precio no viaja en el request: lo lee el backend de
     `producto.precio_venta` dentro de la transacción (regla 5 del plan).
+
+    client_request_id: UUID generado por el cliente (POS offline) para
+    reintentos idempotentes. Si ya existe, el servicio NO crea nada y
+    devuelve la venta existente.
+
+    fecha: fecha/hora de la venta. Debe ser <= ahora y no más de 72 horas
+    atrás; si no, 422. Si viene fecha, venta.fecha y sus movimientos de
+    inventario la usan. El folio sigue saliendo del servicio como siempre.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -28,6 +36,8 @@ class VentaCreate(BaseModel):
     descuento: Decimal = Field(default=Decimal("0"))
     metodo_pago: Literal["efectivo", "tarjeta", "transferencia", "otro"] = "efectivo"
     cliente_id: UUID | None = None
+    client_request_id: UUID | None = None
+    fecha: datetime | None = None
 
     @field_validator("descuento")
     @classmethod
@@ -75,6 +85,7 @@ class VentaRead(BaseModel):
     estado: str
     motivo_anulacion: str | None
     lineas: list[VentaDetalleRead]
+    client_request_id: UUID | None = None
 
 
 class ResumenVentaDia(BaseModel):

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Menu } from 'lucide-react'
 import { useAuth } from '../../auth/useAuth'
+import { useOffline } from '../../offline/useOffline'
+import { BarraConexion } from './BarraConexion'
 import { CampanaNotificaciones } from '../notificaciones/CampanaNotificaciones'
 
 function iniciales(nombre: string): string {
@@ -10,8 +12,15 @@ function iniciales(nombre: string): string {
   return (primera + segunda).toUpperCase()
 }
 
-export function Topbar({ titulo, onAbrirMenu }: { titulo: string; onAbrirMenu: () => void }) {
+export function Topbar({
+  titulo,
+  onAbrirMenu,
+}: {
+  titulo: string
+  onAbrirMenu: () => void
+}) {
   const { perfil, cerrarSesion } = useAuth()
+  const { online, sincronizando, pendientes } = useOffline()
   const [abierto, setAbierto] = useState(false)
   const contenedor = useRef<HTMLDivElement>(null)
 
@@ -38,6 +47,7 @@ export function Topbar({ titulo, onAbrirMenu }: { titulo: string; onAbrirMenu: (
       </button>
       <h2 className="topbar-title">{titulo}</h2>
       <div className="topbar-spacer" />
+      <BarraConexion online={online} sincronizando={sincronizando} pendientes={pendientes} />
       <CampanaNotificaciones />
       {perfil !== null && (
         <div className="user-menu" ref={contenedor}>

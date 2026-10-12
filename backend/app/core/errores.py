@@ -75,6 +75,14 @@ class VentaNoEncontradaError(EntidadNoEncontradaError):
         super().__init__(f"No existe una venta con id '{venta_id}'")
 
 
+class FechaVentaInvalidaError(ErrorDeDominio):
+    """La fecha enviada por el POS offline no es admisible (422).
+
+    Se rechaza una fecha futura o una anterior a 72 horas: la ventana se alinea
+    con la demora máxima prevista para reconectar y sincronizar (P27/F5).
+    """
+
+
 class ClienteInvalidoError(ErrorDeDominio):
     """El cliente enviado no existe o está inactivo (422)."""
 

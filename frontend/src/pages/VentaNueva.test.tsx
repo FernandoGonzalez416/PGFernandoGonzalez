@@ -3,9 +3,16 @@ import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../api/client'
 import { ToastProvider } from '../components/ui/ToastProvider'
+import { ProveedorOffline } from '../offline/ProveedorOffline'
 import { VentaNueva } from './VentaNueva'
 
 const mocks = vi.hoisted(() => ({ registrarVenta: vi.fn() }))
+
+vi.mock('../auth/useAuth', () => ({
+  useAuth: () => ({ perfil: { id: 'user-1' }, cargando: false, iniciarSesion: vi.fn(), cerrarSesion: vi.fn() }),
+}))
+
+vi.mock('../services/catalogo', () => ({ listarProductos: vi.fn().mockResolvedValue([]) }))
 
 vi.mock('../hooks/useProductos', async () => {
   const { useState } = await import('react')
@@ -52,7 +59,9 @@ function montar() {
   return render(
     <MemoryRouter>
       <ToastProvider>
-        <VentaNueva />
+        <ProveedorOffline>
+          <VentaNueva />
+        </ProveedorOffline>
       </ToastProvider>
     </MemoryRouter>,
   )

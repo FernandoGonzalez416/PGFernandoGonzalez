@@ -214,6 +214,7 @@ CREATE TABLE IF NOT EXISTS test.venta (
     estado text NOT NULL DEFAULT 'activa',
     motivo_anulacion text,
     created_at timestamptz NOT NULL DEFAULT now(),
+    client_request_id uuid NULL,
     CONSTRAINT uq_venta_folio UNIQUE (folio),
     CONSTRAINT chk_venta_folio_formato CHECK (folio ~ '^F-\d{4}-\d{4,}$'),
     CONSTRAINT chk_venta_metodo_pago CHECK (metodo_pago IN ('efectivo', 'tarjeta', 'transferencia', 'otro')),
@@ -224,6 +225,8 @@ CREATE TABLE IF NOT EXISTS test.venta (
     CONSTRAINT chk_venta_estado CHECK (estado IN ('activa', 'anulada')),
     CONSTRAINT chk_venta_anulacion_motivo CHECK (estado <> 'anulada' OR motivo_anulacion IS NOT NULL)
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_venta_client_request_id ON test.venta (client_request_id) WHERE client_request_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_venta_fecha ON test.venta (fecha);
 CREATE INDEX IF NOT EXISTS idx_venta_cliente ON test.venta (cliente_id);

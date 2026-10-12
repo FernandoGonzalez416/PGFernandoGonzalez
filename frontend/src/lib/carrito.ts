@@ -1,5 +1,17 @@
-import type { ProductoRead } from '../api/types'
 import { parseDecimal } from './format'
+
+/**
+ * Datos mínimos que el carrito necesita de un producto. Lo cumplen tanto
+ * `ProductoRead` (API, valores como string) como `ProductoCache` (offline,
+ * valores numéricos), por eso se tipa de forma estructural y no con uno solo.
+ */
+export type ProductoVendible = {
+  id: string
+  codigo: string
+  nombre: string
+  precio_venta: string | number
+  existencia: string | number
+}
 
 export type LineaCarrito = {
   productoId: string
@@ -45,13 +57,13 @@ export function totalesCarrito(lineas: LineaCarrito[], descuentoCents: number): 
   return { subtotalCents, descuentoCents: descuento, totalCents: subtotalCents - descuento }
 }
 
-export function cantidadDisponible(producto: ProductoRead): number {
+export function cantidadDisponible(producto: ProductoVendible): number {
   return Math.max(0, Math.floor(parseDecimal(producto.existencia) ?? 0))
 }
 
 export function agregarLinea(
   lineas: LineaCarrito[],
-  producto: ProductoRead,
+  producto: ProductoVendible,
   cantidad = 1,
 ): LineaCarrito[] {
   const existenciaDisponible = cantidadDisponible(producto)

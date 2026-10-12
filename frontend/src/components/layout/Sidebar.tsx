@@ -4,6 +4,7 @@ import {
   Bell,
   BellRing,
   Boxes,
+  Clock,
   LayoutDashboard,
   Lightbulb,
   Package,
@@ -51,6 +52,7 @@ export function Sidebar({ abierto, onNavegar }: { abierto: boolean; onNavegar: (
       etiqueta: 'Ventas',
       items: [
         { to: '/ventas/nueva', etiqueta: 'Nueva venta', visible: puedeVentasRegistrar, icono: ShoppingCart },
+        { to: '/ventas/pendientes', etiqueta: 'Ventas pendientes', visible: puedeVentasRegistrar, icono: Clock },
         { to: '/ventas', etiqueta: 'Historial', visible: puedeStockConsultar, end: true, icono: Receipt },
       ],
     },

@@ -15,10 +15,13 @@ import {
   cambiarCantidad,
   totalesCarrito,
   type LineaCarrito,
+  type ProductoVendible,
 } from '../lib/carrito'
 import { useProductos } from '../hooks/useProductos'
 import { registrarVenta } from '../services/ventas'
 import { TablaCarrito } from '../components/ventas/TablaCarrito'
+import { useOffline } from '../offline/useOffline'
+import type { VentaCola } from '../offline/types'
 
 const METODOS = [
   { valor: 'efectivo', etiqueta: 'Efectivo' },
@@ -37,6 +40,8 @@ export function VentaNueva() {
   const { notificar } = useToast()
   const navegar = useNavigate()
   const { productos, cargando, error, busqueda, setBusqueda, recargar } = useProductos()
+  const { usuarioId, online, buscarPorCodigo, buscarPorNombre, descontarExistencia, agregarVenta } =
+    useOffline()
   const reducirMovimiento = useReducedMotion()
 
   const [lineas, setLineas] = useState<LineaCarrito[]>([])
@@ -49,9 +54,7 @@ export function VentaNueva() {
     [lineas, descuentoTexto],
   )
 
-  const agregar = (indice: number) => {
-    const producto = productos[indice]
-    if (producto === undefined) return
+  const agregar = (producto: ProductoVendible) => {
     if (cantidadDisponible(producto) <= 0) {
       notificar(`${producto.nombre} no tiene existencia disponible.`, 'error')
       return
@@ -64,33 +67,82 @@ export function VentaNueva() {
     evento.preventDefault()
     const codigo = busqueda.trim().toLowerCase()
     if (codigo === '') return
-    const indice = productos.findIndex((producto) => producto.codigo.toLowerCase() === codigo)
-    if (indice === -1) {
-      notificar('No se encontró un producto con ese código.', 'error')
+
+    // Buscar en productos (online) o en caché (offline)
+    const producto = productos.find((p) => p.codigo.toLowerCase() === codigo)
+    if (producto) {
+      agregar(producto)
+      setBusqueda('')
       return
     }
-    agregar(indice)
-    setBusqueda('')
+
+    // Intentar con el caché local del catálogo (modo sin conexión)
+    const productoCache = buscarPorCodigo(codigo)
+    if (productoCache) {
+      agregar(productoCache)
+      setBusqueda('')
+      return
+    }
+
+    notificar('No se encontró un producto con ese código.', 'error')
   }
 
   const cobrar = async () => {
     if (lineas.length === 0 || enviando) return
     setEnviando(true)
     try {
-      const venta = await registrarVenta({
-        lineas: lineas.map((linea) => ({ producto_id: linea.productoId, cantidad: linea.cantidad })),
-        descuento: centavosAQ(totales.descuentoCents),
-        metodo_pago: metodoPago,
-        cliente_id: null,
-      })
-      notificar('Venta registrada.', 'ok')
-      navegar(`/ventas/${venta.id}/recibo`)
+      if (online) {
+        // Venta online: enviar directamente al servidor
+        const venta = await registrarVenta({
+          lineas: lineas.map((linea) => ({ producto_id: linea.productoId, cantidad: linea.cantidad })),
+          descuento: centavosAQ(totales.descuentoCents),
+          metodo_pago: metodoPago,
+          cliente_id: null,
+        })
+        notificar('Venta registrada.', 'ok')
+        navegar(`/ventas/${venta.id}/recibo`)
+      } else {
+        // Venta offline: guardar en cola local
+        const clientRequestId = crypto.randomUUID()
+        const folioProvisional = `T-${Date.now().toString().slice(-4)}`
+        const ventaOffline: VentaCola = {
+          client_request_id: clientRequestId,
+          folio_provisional: folioProvisional,
+          folio_definitivo: null,
+          fecha: new Date().toISOString(),
+          lineas: lineas.map((l) => ({
+            producto_id: l.productoId,
+            nombre: l.nombre,
+            cantidad: l.cantidad,
+            precio_unitario: l.precioUnitarioCents / 100,
+            subtotal: (l.precioUnitarioCents * l.cantidad) / 100,
+          })),
+          subtotal: totales.subtotalCents / 100,
+          descuento: totales.descuentoCents / 100,
+          total: totales.totalCents / 100,
+          metodo_pago: metodoPago,
+          estado: 'pendiente',
+          usuario_id: usuarioId ?? 'offline',
+        }
+
+        // Descontar existencia del caché local
+        for (const linea of lineas) {
+          descontarExistencia(linea.productoId, linea.cantidad)
+        }
+
+        agregarVenta(ventaOffline)
+        notificar(`Venta guardada localmente con folio ${folioProvisional}. Se sincronizará cuando vuelva la conexión.`, 'ok')
+        navegar('/ventas/pendientes')
+      }
     } catch (fallo) {
       notificar(mensajeDeError(fallo), 'error')
     } finally {
       setEnviando(false)
     }
   }
+
+  // Búsqueda offline: usar caché local
+  const productosMostrar = productos.length > 0 ? productos : buscarPorNombre(busqueda)
 
   return (
     <div className="pagina venta-nueva">
@@ -142,7 +194,7 @@ export function VentaNueva() {
               </div>
             )}
 
-            {!cargando && error === null && productos.length === 0 && (
+            {!cargando && error === null && productosMostrar.length === 0 && (
               <div className="empty tabla-vacia">
                 <span className="empty-icon empty-icon-lucide" aria-hidden="true"><SearchX /></span>
                 <h3>No hay productos que coincidan</h3>
@@ -150,9 +202,9 @@ export function VentaNueva() {
               </div>
             )}
 
-            {!cargando && error === null && productos.length > 0 && (
+            {!cargando && error === null && productosMostrar.length > 0 && (
               <ul className="pos-resultados">
-                {productos.map((producto, indice) => (
+                {productosMostrar.map((producto, indice) => (
                   <motion.li
                     key={producto.id}
                     initial={reducirMovimiento === true ? false : { opacity: 0, transform: 'translateY(6px)' }}
@@ -167,7 +219,7 @@ export function VentaNueva() {
                       type="button"
                       className="pos-resultado"
                       disabled={cantidadDisponible(producto) <= 0}
-                      onClick={() => agregar(indice)}
+                      onClick={() => agregar(producto)}
                     >
                       <span className="pos-resultado-info">
                         <span className="cell-strong">{producto.nombre}</span>

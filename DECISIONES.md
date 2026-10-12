@@ -8,6 +8,8 @@ Actualización principal: 2026-09-21 (confirmación P1–P12 y aprobación de **
 
 Actualización: 2026-09-26 — **P7 reaprobada (identidad visual)**. Se **descartan** la paleta morado/blanco con acentos dorados y la marca de prueba "Belleza Clara". Identidad oficial: **Familia de la Cruz**, paleta crema/nude/terracota/café/gloss y tipografías **Playfair Display** (títulos) + **Montserrat** (cuerpo). El stack tecnológico no cambia. Ver sección P7, incluida la discrepancia con la tesis §5.2.
 
+Actualización: 2026-10-12 — **P27 (modo sin conexión mínimo del punto de venta, F5)**: se autoriza e implementa una versión mínima de POS sin conexión con `localStorage` (sin Service Worker/PWA/IndexedDB), cola FIFO con reintento idempotente por `client_request_id` y validación de fecha del cliente (≤ ahora, ≤ 72 h). El motor de predicción (M1/M1-TER), el comprobante (B5) y las sugerencias (B6, superada por M1) no cambian. **P2/R4 siguen vigentes**: esta es una versión mínima, no la estrategia offline definitiva.
+
 ### Tabla de estado general
 
 | # | Tema | Estado |
@@ -979,6 +981,36 @@ Las mejoras de la evaluación anterior (media de 22.6 %) quedan **superadas** po
 
 ---
 
+## P27. Modo sin conexión mínimo del punto de venta (F5 — 2026-10-12)
+
+> **Versión mínima autorizada** del requisito de operación sin conexión (P2/R4). **No** es la estrategia offline definitiva: P2 sigue vigente y R4 sigue pendiente. Esta decisión implementa lo justo para que el punto de venta siga vendiendo cuando se cae la red, sin abrir la puerta a una arquitectura offline compleja (sin Service Worker, sin PWA, sin IndexedDB).
+
+### Contexto
+
+- P2 declaró la operación sin conexión como **requisito de la solución final**, pero **no obligatoria** para la primera versión funcional, y prohibió asumir tecnología concreta (IndexedDB, PWA, Service Worker) sin documentarla.
+- El 2026-10-12 se autorizó cerrar **F5**: una versión mínima del POS offline con **idempotencia en el backend** para que el reintento no duplique ventas. El frontend web (React.js) es el único cliente actual; la app móvil sigue fuera de alcance.
+- Sin idempotencia, un reintento del POS tras un corte de red crearía **la misma venta dos veces** (doble descuento de stock). Sin validación de fecha, el POS podría enviar fechas inverosímiles al reconectar días después.
+
+### Decisión
+
+1. **Alcance mínimo**: **solo el módulo de Punto de venta (Nueva venta)** opera sin conexión, sobre un **caché del catálogo** ya descargado. El resto de la aplicación requiere conexión. **Sin Service Worker, sin PWA y sin IndexedDB**: la aplicación debe estar **cargada** en el navegador; no hay soporte para abrir la app con la red caída desde cero.
+2. **Almacenamiento local** (`frontend/src/offline/almacenamiento.ts`): `localStorage` con **claves versionadas y separadas por usuario** (`pg_inventario_offline_v1_<tipo>_<usuarioId>`, tipos `cola_ventas`, `catalogo_cache`, `estado_app`). Toda lectura/escritura va en `try/catch`; si la cuota está llena, se devuelve un **aviso claro** (`{ exito: false, error }`) y **nunca** se descartan datos en silencio.
+3. **Idempotencia (backend)** — migración `16_add_client_request_id_venta.sql`: columna `venta.client_request_id uuid NULL` con **UNIQUE parcial** (`WHERE client_request_id IS NOT NULL`). `VentaCreate.client_request_id` (opcional) viaja en el request. Si ya existe una venta con ese id, el servicio **devuelve la existente sin crear fila, sin descontar stock y sin escribir movimiento**; `POST /api/ventas` responde **201** al crear y **200** en la repetición. La distinción la expone `ResultadoRegistroVenta(venta, creada)` y el endpoint ajusta el `status_code` con `Response`; el servicio **no conoce HTTP** (coherente con `app/core/errores.py`).
+4. **Fecha del cliente**: `VentaCreate.fecha` (opcional, ISO 8601). Se rechaza una fecha **futura** o de **más de 72 horas atrás** con **422** (`FechaVentaInvalidaError`, mapeado en `app/main.py`). Una fecha **sin zona (naive)** se interpreta como **UTC** (`_como_utc`) para poder compararla sin error. La fecha enviada se guarda en `venta.fecha` y en los movimientos de inventario. **72 horas** es la ventana máxima prevista de reconexión que se decidió tolerar; reintentos posteriores se marcan para revisión.
+5. **Cola y sincronización (frontend)** — `frontend/src/offline/`: contexto `ProveedorOffline` que combina `useConexion`, `useColaVentas` y `useCatalogoCache`. La cola es **FIFO**, sincroniza **una venta a la vez** y reintenta con el **mismo `client_request_id`**. Manejo de errores: **401** pausa la sincronización y marca `authRequerida` **sin perder la cola**; **409/422/403** pasan la venta a `requiere_revision` y la sincronización **continúa**; **error de red** detiene y se reintenta al volver la conexión. La sincronización automática vive en el proveedor (no en el hook) para que las pruebas unitarias sean deterministas.
+6. **Interfaz**: indicador de conexión en la barra superior (`BarraConexion`: *Sin conexión / N pendientes / Sincronizando… / Al día*) y página **`/ventas/pendientes`** (`VentasPendientes`) para revisar, **reintentar** o **descartar** las ventas que requieren revisión. Con `online=false`, el POS busca en el caché y descuenta la existencia local al cobrar.
+
+### Consideraciones y límites explícitos
+
+- **La estrategia offline definitiva (P2/R4) NO queda resuelta**: esto es una versión mínima. No se introducen dependencias nuevas ni se asume PWA/Service Worker.
+- **Sin Service Worker**: si el usuario **recarga la página sin conexión**, la aplicación no vuelve a cargar. Hay que evitarlo en la demo.
+- **El stock del caché puede quedar desactualizado**: otra sesión pudo vender el mismo producto. La fuente de verdad sigue siendo el servidor; el backend valida el stock al sincronizar y un conflicto **no se corrige solo** (la venta cae en `requiere_revision` para que una persona decida).
+- **El caché del catálogo se descarga paginando** (100 por página) al recuperar la conexión; si la descarga falla, se conserva el caché anterior.
+- **Paridad de esquemas**: `backend/tests/sql/00_test_schema.sql` incluye `client_request_id` y su índice, de modo que las pruebas de integración (P20) corren contra el mismo esquema que producción.
+- **Desviación registrada**: el primer borrador lanzaba `HTTPException` desde el servicio; se descartó para que los servicios sigan siendo ajenos a HTTP. La repetición idempotente se modeló como **éxito** (`creada=False`), no como error de dominio.
+
+---
+
 
 Registradas aquí, **sin corregir silenciosamente** ni el plan ni el código. Las ya resueltas se marcan con **RESUELTO + fecha** (queda el texto original bajo cada una para no perder el origen de la discrepancia):
 
@@ -999,8 +1031,10 @@ Registradas aquí, **sin corregir silenciosamente** ni el plan ni el código. La
 
 **Resueltas el 2026-10-07 (APROBADAS)**: **B6** (sugerencias con promedio móvil de 7 días como línea base, `nivel_confianza='baja'` o `'simulacion'` con `DATOS_FICTICIOS`, motor Scikit-learn para fase posterior) y **B5** (comprobante en HTML con estilos de impresión, descarga a PDF vía imprimir del navegador, sin dependencias nuevas). Secciones **B6** y **B5** de más arriba.
 
+**Resueltas el 2026-10-12**: **P27** (modo sin conexión mínimo del punto de venta + idempotencia de ventas): versión mínima autorizada en F5, con `localStorage`, cola FIFO e idempotencia por `client_request_id`. **No** resuelve R4: la estrategia offline definitiva sigue pendiente.
+
 Siguen pendientes:
-- **R4. Estrategia offline definitiva** y su tecnología (P2): se documentará cuando llegue el momento; no bloquea la primera versión.
+- **R4. Estrategia offline definitiva** y su tecnología (P2): se documentará cuando llegue el momento; no bloquea la primera versión. **Nota (2026-10-12)**: en F5 se implementó una **versión mínima** de POS sin conexión (**P27**) con `localStorage`; **no** resuelve R4 ni fija la tecnología definitiva (sin Service Worker/PWA/IndexedDB).
 - **R5. Detalles de despliegue/hosting** (P12): cuando la aplicación esté avanzada.
 - **R7/R12. Supabase MCP (P17)**: CONFIGURADO y AUTENTICADO (2026-09-21). **Project Ref `spozipecnvhmchxvmsqt` aportado y aplicado** (2026-09-21). Pendiente únicamente: **reiniciar OpenCode** (manual, hecho por el usuario) para cargar las herramientas MCP scoped al proyecto en la sesión. No crear ni modificar objetos en Supabase sin informar antes.
 - **Inicio del desarrollo**: crear código (React/FastAPI/Node/Supabase/IA), instalar dependencias o crear tablas queda **prohibido hasta orden explícita** del usuario.

@@ -1,4 +1,5 @@
-from datetime import date
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from uuid import UUID
 
@@ -11,6 +12,7 @@ from app.core.errores import (
     AnulacionNoPermitidaError,
     ClienteInvalidoError,
     DescuentoInvalidoError,
+    FechaVentaInvalidaError,
     StockInsuficienteError,
     VentaNoAnulableError,
     VentaNoEncontradaError,
@@ -29,9 +31,34 @@ from app.services.productos import obtener_almacen_por_defecto, obtener_producto
 SELECCION_VENTA = """
     SELECT v.id, v.folio, v.fecha, v.cliente_id, v.usuario_id,
            v.metodo_pago, v.subtotal, v.descuento, v.total, v.estado,
-           v.motivo_anulacion
+           v.motivo_anulacion, v.client_request_id
     FROM venta v
 """
+
+
+@dataclass(frozen=True)
+class ResultadoRegistroVenta:
+    """Resultado de `registrar_venta` con idempotencia (P27/F5).
+
+    `creada` distingue la venta nueva (201) de la repetición de una petición ya
+    procesada (200). Lo consume el endpoint para ajustar el código de estado; el
+    servicio no conoce HTTP.
+    """
+
+    venta: VentaRead
+    creada: bool
+
+
+def _como_utc(fecha: datetime) -> datetime:
+    """Normaliza una fecha a UTC consciente de zona horaria.
+
+    El POS offline envía ISO 8601 con `Z` (consciente), pero un cliente con
+    fecha sin zona (naive) se interpreta como UTC para poder compararla con
+    `datetime.now(timezone.utc)` sin `TypeError`.
+    """
+    if fecha.tzinfo is None:
+        return fecha.replace(tzinfo=timezone.utc)
+    return fecha.astimezone(timezone.utc)
 
 
 async def _leer_lineas(sesion: AsyncSession, venta_id: UUID) -> list[VentaDetalleRead]:
@@ -71,16 +98,55 @@ async def obtener_venta(sesion: AsyncSession, venta_id: UUID) -> VentaRead:
 
 async def registrar_venta(
     sesion: AsyncSession, datos: VentaCreate, usuario_id: UUID
-) -> VentaRead:
+) -> ResultadoRegistroVenta:
     """Registra una venta de forma atómica (plan, reglas 1-7).
 
-    Ventas, detalles y movimientos se escriben en un único SAVEPOINT (P24):
-    si algún producto falla la validación de stock, no queda ni venta ni
-    movimiento parcial.
+    Idempotencia (P27/F5):
+    - Si viene client_request_id y ya existe una venta con ese id, se devuelve
+      la existente con `creada=False` (el endpoint responde 200), sin duplicar
+      stock ni movimiento.
+    - Si no existe, se crea como de costumbre (`creada=True`, 201).
+    - Si viene fecha, se valida que sea <= ahora y no más de 72 horas atrás;
+      si no, 422. La fecha guardada y la de los movimientos es la enviada.
+
+    La unicidad la garantiza el UNIQUE parcial
+    `client_request_id WHERE NOT NULL`.
     """
+
     autor = UUID(str(usuario_id))
     almacen_id = await obtener_almacen_por_defecto(sesion)
 
+    # --- Idempotencia por client_request_id ---
+    crid = datos.client_request_id
+    if crid is not None:
+        existente = (
+            await sesion.execute(
+                text("SELECT id FROM venta WHERE client_request_id = :crid"),
+                {"crid": crid},
+            )
+        ).scalar_one_or_none()
+        if existente is not None:
+            return ResultadoRegistroVenta(
+                venta=await _leer_venta(sesion, UUID(str(existente))),
+                creada=False,
+            )
+
+    # --- Validación de fecha (P27/F5) ---
+    ahora = datetime.now(timezone.utc)
+    if datos.fecha is not None:
+        fecha_venta = _como_utc(datos.fecha)
+        if fecha_venta > ahora:
+            raise FechaVentaInvalidaError(
+                "La fecha de la venta no puede ser posterior a la fecha actual."
+            )
+        if fecha_venta < ahora - timedelta(hours=72):
+            raise FechaVentaInvalidaError(
+                "La fecha de la venta no puede ser más de 72 horas atrás."
+            )
+    else:
+        fecha_venta = ahora
+
+    # --- Cliente opcional ---
     if datos.cliente_id is not None:
         existe_cliente = (
             await sesion.execute(
@@ -142,11 +208,11 @@ async def registrar_venta(
                     """
                     INSERT INTO venta (
                         folio, cliente_id, usuario_id, metodo_pago,
-                        subtotal, descuento, total
+                        subtotal, descuento, total, fecha, client_request_id
                     )
                     VALUES (
                         :folio, :cliente_id, :usuario_id, :metodo_pago,
-                        :subtotal, :descuento, :total
+                        :subtotal, :descuento, :total, :fecha, :client_request_id
                     )
                     RETURNING id
                     """
@@ -159,6 +225,8 @@ async def registrar_venta(
                     "subtotal": subtotal,
                     "descuento": descuento,
                     "total": total,
+                    "fecha": fecha_venta,
+                    "client_request_id": crid,
                 },
             )
         ).scalar_one()
@@ -220,7 +288,10 @@ async def registrar_venta(
                 },
             )
 
-    return await _leer_venta(sesion, venta_id)
+    return ResultadoRegistroVenta(
+        venta=await _leer_venta(sesion, venta_id),
+        creada=True,
+    )
 
 
 async def _obtener_venta(sesion: AsyncSession, venta_id: UUID) -> dict:

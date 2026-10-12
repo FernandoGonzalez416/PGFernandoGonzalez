@@ -2,7 +2,7 @@
 
 **Proyecto:** Plataforma inteligente basada en la nube con capacidad offline para la gestión de inventarios y reabastecimiento en tiendas cosméticas
 **Caso de estudio:** Familia de la Cruz — Villa Nueva, Guatemala
-**Versión:** F4 (Panel, Alertas, Reportes, Sugerencias, Notificaciones, **Predicción de demanda**)
+**Versión:** F5 (Panel, Alertas, Reportes, Sugerencias, Notificaciones, Predicción de demanda, **Modo sin conexión del POS**)
 
 ---
 
@@ -115,6 +115,19 @@ Lista de verificación previa a la exposición (si algo falla aquí, la demo fal
 4. **Toolbar Productos**: "Nuevo producto" no tapa el buscador en móvil (flex-wrap)
 5. **ErrorBoundary**: forzar error (ej. romper import) → pantalla "Algo salió mal" + botón Recargar
 
+### 3.7 Modo sin conexión del POS (2 min)
+
+> **Antes de probarlo:** la aplicación debe estar **cargada** (no hay Service Worker); **no recargues la página** mientras estés sin conexión.
+
+1. Ir a **Nueva venta** (`/ventas/nueva`).
+2. Abrir DevTools (F12) → pestaña **Red / Network** → cambiar de "Sin limitación" a **Sin conexión / Offline**.
+3. Observar la barra superior: aparece el indicador **"Sin conexión"**.
+4. Escanear un producto por código (el catálogo está en caché) y pulsar **Enter**, ajustar cantidad y pulsar **Cobrar**.
+5. La venta se guarda en una **cola local** con **folio provisional** (`T-xxxx`) y navega a **Ventas pendientes** (`/ventas/pendientes`). Registrar una segunda venta → **2 pendientes** en la barra superior.
+6. Volver a **conexión en línea** (DevTools → "Sin limitación"). El indicador pasa a **"Sincronizando…"** y luego a **"Al día"**; en **Ventas pendientes** cada fila muestra **folio provisional → folio definitivo** y estado **Sincronizada**.
+7. **Idempotencia:** si la sincronización se interrumpe y reintenta, el backend reutiliza el mismo `client_request_id` y **no duplica** la venta ni descuenta stock dos veces.
+8. **Conflicto:** si el stock cambió en el servidor, la venta queda en **"Requiere revisión"** con el mensaje del backend y botones **Reintentar** / **Descartar** (no se corrige sola).
+
 ---
 
 ## 4. Puntos clave a destacar
@@ -130,6 +143,7 @@ Lista de verificación previa a la exposición (si algo falla aquí, la demo fal
 | **Campana** | Badge temps real, click marca leída, sin polling (refetch en mount + pathname) |
 | **Responsive** | 390/768/960/1080px, `prefers-reduced-motion`, focus-visible |
 | **Motion** | Entrada escalonada, hover/tap scale(0.97), curvas cubic-bezier custom |
+| **Modo sin conexión (P27)** | POS con caché del catálogo, cola FIFO en `localStorage`, sincronización idempotente por `client_request_id` (201 al crear / 200 al repetir), fecha del cliente ≤ 72 h; indicador de conexión en la barra superior |
 
 ---
 
@@ -151,7 +165,7 @@ Lista de verificación previa a la exposición (si algo falla aquí, la demo fal
 | Item | Descripción |
 |------|-------------|
 | IA predicción | Implementada (Random Forest, Gradient Boosting, Ridge vs. promedio móvil, validación temporal, confianza por evidencia P13) |
-| Offline/PWA | No implementado en F3 (arquitectura preparada) |
+| Offline/PWA | **Modo sin conexión mínimo implementado (P27/F5)**: solo el POS, con `localStorage` y cola idempotente. **Sin** Service Worker/PWA/IndexedDB: la app debe estar cargada y no se recarga sin conexión. La estrategia offline definitiva (P2/R4) sigue pendiente. |
 | App móvil | Fuera de alcance (React Native fase posterior) |
 | VentaDetalle anulable | Botón "Anular" usa estado `'registrada'` vs real `'activa'` (discrepancia F2) |
 | Test integración backend | Lento (~15 min) — no ejecutar en CI normal |
